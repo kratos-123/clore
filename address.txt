@@ -1,0 +1,6 @@
+#文件格式，以英文#开头是注释，会直接过滤
+nimble1fc7l9qmgm3q42yuc7qpy3yed83xk9wjqy8vw0u
+nimble1quz2sl26h8n7rg48juc6xalekhxp0dle3k8f2e
+
+
+nimble1enex83alluyduwwg85fvqhdadnkyflu2x6mpcg
