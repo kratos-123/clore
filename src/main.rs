@@ -24,5 +24,7 @@ async fn main() -> std::io::Result<()> {
 }
 
 fn zipscreen() {
-    let _ = std::process::Command::new("bash").args(["screen","-d","nimble"]).output();
+    let _ = std::process::Command::new("screen")
+        .args(["-d", "nimble"])
+        .output();
 }

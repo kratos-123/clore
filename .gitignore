@@ -1,1 +1,4 @@
 /target
+/venv
+/nimble-miner-public
+/.vscode

@@ -6,10 +6,13 @@ mod test {
         model::{market::Marketplace, Card},
         Clore,
     };
+    use tracing::info;
 
     #[tokio::test]
     async fn marketplace_test() {
+        tracing_subscriber::fmt::init();
         let result = Clore::default().marketplace().await;
+        info!("{:?}", result);
         assert_eq!(true, result.is_ok());
     }
 

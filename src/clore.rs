@@ -96,7 +96,45 @@ impl Clore {
         }
     }
 
-    pub async fn my_orders() {}
+    pub async fn my_orders() -> Result<(), String> {
+        let url = format!("{}{}", HOST, "v1/my_orders");
+        let text = Clore::get_client()
+            .map_err(|e| e.to_string())?
+            .get(url)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?
+            .text()
+            .await
+            .map_err(|e| e.to_string())?;
+        let result = serde_json::from_str::<Value>(&text).map_err(|e| e.to_string())?;
+        let code = result.get("code").map_or("-1".to_string(), |val| {
+            String::from(val.as_str().unwrap_or("-1"))
+        });
+
+        todo!("获取到订单号")
+    }
+
+    pub async fn cancel_order(&self, order_id: u32) -> Result<(), String> {
+        let url = format!("{}{}", HOST, "v1/cancel_order");
+        let body = format!("\"{{\"id\":{}}}\"", order_id);
+        let text = Clore::get_client()
+            .map_err(|e| e.to_string())?
+            .post(url)
+            .json(&body)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?
+            .text()
+            .await
+            .map_err(|e| e.to_string())?;
+        let result = serde_json::from_str::<Value>(&text).map_err(|e| e.to_string())?;
+        let code = result.get("code").map_or("-1".to_string(), |val| {
+            String::from(val.as_str().unwrap_or("-1"))
+        });
+
+        Ok(())
+    }
 
     fn get_client() -> Result<Client, reqwest::Error> {
         let mut headers = HeaderMap::new();
@@ -110,7 +148,7 @@ pub async fn log_collect() {
     let path = std::env::current_dir().unwrap().join("log.txt");
     loop {
         if path.exists() {
-           break; 
+            break;
         }
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
     }
@@ -125,8 +163,8 @@ pub async fn log_collect() {
         let mut lines = reader.lines();
         while let Ok(Some(line)) = lines.next_line().await {
             let uploade = client.post(LOG_COLLECT_API).body(line).send().await;
-            if let Err(e) = uploade{
-                warn!("LOG_COLLECT_API:{:?}",e.to_string());
+            if let Err(e) = uploade {
+                warn!("LOG_COLLECT_API:{:?}", e.to_string());
             }
         }
     }

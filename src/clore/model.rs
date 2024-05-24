@@ -315,3 +315,25 @@ cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> log.txt 2>&1
         }
     }
 }
+
+pub mod my_orders {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct Order {
+        order_id: i32,
+        pub_cluster: Vec<String>,
+        tcp_ports: Vec<String>,
+        http_port: String,
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct MyOrders {
+        code: i32,
+        orders: Vec<Order>,
+    }
+
+    impl MyOrders {
+        pub fn filter(&self) {}
+    }
+}

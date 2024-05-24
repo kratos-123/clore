@@ -32,8 +32,9 @@ cd nimble-miner-public
 
 echo "env aready done"
 
-cd $HOME/clore && screen -S nimble
-cargo run -r 
+cd $HOME/clore
+screen -S nimble cargo run -r 
+
 
 # 此文件由服务创建时自动运行
 # python3 execute.py $1 

@@ -1,8 +1,13 @@
+use chrono::{DateTime, Local, TimeZone};
+use serde_json::error;
+
 #[allow(dead_code)]
 use std::io::{BufRead, BufReader, Error, Write};
 use std::{clone, collections::HashMap, io::Read, net::IpAddr, sync::Arc};
 use tokio::sync::Mutex;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
+
+use crate::clore::{model::wallet, Clore};
 
 lazy_static::lazy_static! {
     pub static ref WALLETS_STATE:Arc<Mutex<Wallets>> = {
@@ -17,19 +22,36 @@ pub enum AddressType {
     NULL,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Wallet {
-    address: String,
-    remoteip: Option<IpAddr>,
-    addr_type: AddressType,
+    pub address: String,
+    pub sshaddr: Option<String>,
+    pub sshport: Option<u32>,
+    pub addr_type: AddressType,
+    pub start_time: Option<DateTime<Local>>,
+    pub order_id: Option<u32>,
+    pub report_last_time: Option<DateTime<Local>>,
+    pub deploy: Deployed,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Deployed {
+    NOTASSIGNED,
+    DEPLOYING,
+    DEPLOYED,
 }
 
 impl Wallet {
     pub fn new(address: String, addr_type: AddressType) -> Wallet {
         Wallet {
             address,
-            remoteip: None,
             addr_type,
+            sshaddr: None,
+            sshport: None,
+            start_time: None,
+            order_id: None,
+            report_last_time: None,
+            deploy: Deployed::NOTASSIGNED,
         }
     }
 }
@@ -120,7 +142,6 @@ impl Wallets {
     }
 
     pub async fn load_address_file() -> Vec<Wallet> {
-        // let wallets = Arc::clone(&WALLETS_STATE);
         let mut address = std::fs::File::open("./address.txt")
             .expect("文件:./address.txt不存在！，请创建此文件，");
         let mut addr = String::new();
@@ -165,6 +186,85 @@ impl Wallets {
             info!("地址匹配结果:{:?}", addr_type.clone());
         }
     }
+
+    // 过滤规则
+    // 未分配订单id的服务器
+    pub async fn filter(&self) -> Vec<Wallet> {
+        let mut result: Vec<Wallet> = Vec::new();
+        for (_, wallet) in (*self).iter() {
+            if wallet.addr_type == AddressType::SUB && wallet.deploy == Deployed::NOTASSIGNED {
+                result.push(wallet.clone());
+            }
+        }
+        result
+    }
+
+    // 分配服务器
+    pub async fn assgin_server(
+        &mut self,
+        wallet_adress: &str,
+        order_id: u32,
+        sshaddr: String,
+        sshport: u32,
+    ) -> Result<bool, String> {
+        if !(*self).contains_key(wallet_adress) {
+            return Err("不存在钱包地址！".to_string());
+        }
+        let local_time = Local::now();
+        let wallet = (*self).get_mut(wallet_adress).unwrap();
+        wallet.deploy = Deployed::DEPLOYING;
+        wallet.start_time = Some(local_time);
+        wallet.sshaddr = Some(sshaddr);
+        wallet.sshport = Some(sshport);
+        wallet.order_id = Some(order_id);
+
+        Ok(true)
+    }
+
+    pub async fn update_log_collect_time(&mut self, wallet_adress: &str) -> bool {
+        if !(*self).contains_key(wallet_adress) {
+            return false;
+        }
+        let wallet = (*self).get_mut(wallet_adress).unwrap();
+        let local_time = Local::now();
+        wallet.report_last_time = Some(local_time);
+        wallet.deploy = Deployed::DEPLOYED;
+        true
+    }
+
+    // 超时未上报时间，则取消该机器订单号，重置所有钱包信息
+    pub async fn filter_log_timeout(&mut self, clore: &Clore) {
+        let mut order_ids: Vec<u32> = Vec::new();
+        for (_, wallet) in (*self).iter_mut() {
+            let nowtime = Local::now();
+
+            if let Some(order_id) = wallet.order_id {
+                // 上报时间若是超过了十分钟，则也取消，订单号
+                if let Some(report_last_time) = wallet.report_last_time {
+                    if nowtime.timestamp() - report_last_time.timestamp() > 10 * 60 {
+                        order_ids.push(order_id);
+                    }
+                } else {
+
+                    // 创建时间超过15分钟，还未有上报时间则，进行取消订单
+                    if let Some(start_time) = wallet.start_time {
+                        if nowtime.timestamp() - start_time.timestamp() > 15 * 60 {
+                            order_ids.push(order_id);
+                        }
+                    }
+                }
+            }
+        }
+        for order_id in order_ids.iter() {
+            let result = clore.cancel_order(order_id.clone()).await;
+            if let Err(e) = result {
+                error!("订单:{:?}取消失败,错误码：{:?}",order_id,e);
+            }else {
+                warn!("已取消{:?}该订单",order_id);
+            }
+        }
+
+    }
 }
 
 pub async fn pool() {
@@ -172,8 +272,10 @@ pub async fn pool() {
         let wallets = Arc::clone(&WALLETS_STATE);
         let mut row = wallets.lock().await;
         let other = Wallets::load_address_file().await;
+        let wallets = row.filter().await;
         row.check(&other).await;
+        warn!("未分配钱包{:?}",wallets);
 
-        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
     }
 }
