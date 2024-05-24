@@ -1,13 +1,12 @@
 #!/bin/bash
-#rust安装
-chmod +x ./rust.sh && ./rust.sh -y
 
 # 项目依赖
-apt install pkg-config gcc libssl-dev -y
+apt install pkg-config gcc libssl-dev python3.8-venv -y
 
-echo "PATH='\$HOME/.cargo/bin:\$PATH'" >> $HOME/.bashrc
-source "$HOME/.cargo/env"
-source  $HOME/.bashrc
+#rust安装
+chmod +x ./rust.sh && ./rust.sh -y
+source $HOME/.cargo/env
+
 
 if [ ! -d "nimble-miner-public" ]; then
     git clone https://github.com/nimble-technology/nimble-miner-public.git;
@@ -20,6 +19,7 @@ cd nimble-miner-public
 python3 -m venv ./venv
 source ./venv/bin/activate
 
+python3 -m pip install --upgrade pip
 python3 -m pip install requests==2.31.0 
 python3 -m pip install torch==2.2.1
 python3 -m pip install accelerate==0.27.0 
