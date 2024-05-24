@@ -51,7 +51,9 @@ impl ToString for Currency {
 pub struct Card {
     pub server_id: u32,
     pub price_demand: f64,
+    pub avg_price_demand: f64,
     pub price_spot: f64,
+    pub avg_price_spot: f64,
     pub mrl: u32,
     pub card_number: i32,
     pub rented: bool,
@@ -118,7 +120,7 @@ pub mod market {
 
     impl Marketplace {
         pub fn filter(&self) -> Vec<Card> {
-            let regex = Regex::new(r"(1080|3080|3090|4070|4080|4080|4090)").unwrap();
+            let regex = Regex::new(r"(3080|3090|4070|4080|4080|4090)").unwrap();
             let cards: Vec<Card> = (*self)
                 .iter()
                 .filter(|item| {
@@ -138,7 +140,7 @@ pub mod market {
                         .collect::<Vec<String>>();
                     let number = card_info.get(0).map_or(0, |s| {
                         let s = s.replace("x", "");
-                        s.parse::<i32>().unwrap_or_default()
+                        s.parse::<i32>().map_or(1, |n| n)
                     });
                     let factory = card_info
                         .get(1)
@@ -160,20 +162,27 @@ pub mod market {
                     let card_type =
                         CardType::from_str(&format!("{}{}{}", factory, card_type, flag))
                             .unwrap_or_else(|_| CardType::UNKNOWN(card_info.join(" ")));
+                    let price_demand = itme
+                        .price
+                        .on_demand
+                        .get("CLORE-Blockchain")
+                        .and_then(|price| Some(price.clone()))
+                        .unwrap_or_default();
+                    let avg_price_demand = price_demand / (number as f64);
+
+                    let price_spot = itme
+                        .price
+                        .spot
+                        .get("CLORE-Blockchain")
+                        .and_then(|price| Some(price.clone()))
+                        .unwrap_or_default();
+                    let avg_price_spot = price_spot / (number as f64);
                     let card = Card {
                         server_id: itme.id,
-                        price_demand: itme
-                            .price
-                            .on_demand
-                            .get("CLORE-Blockchain")
-                            .and_then(|price| Some(price.clone()))
-                            .unwrap_or_default(),
-                        price_spot: itme
-                            .price
-                            .spot
-                            .get("CLORE-Blockchain")
-                            .and_then(|price| Some(price.clone()))
-                            .unwrap_or_default(),
+                        price_demand: price_demand,
+                        avg_price_demand: avg_price_demand,
+                        price_spot: price_spot,
+                        avg_price_spot: avg_price_spot,
                         mrl: itme.mrl,
                         card_number: number,
                         rented: itme.rented,
@@ -280,12 +289,12 @@ pub mod resent {
             let mut ports = HashMap::<String, String>::new();
             ports.insert("22".to_string(), "tcp".to_string());
             ports.insert("8888".to_string(), "http".to_string());
-            let command = r##"#!/bin/sh
-            apt update -y 
-            apt install git -y
-            mkdir $HOME/nimble && cd $HOME/nimble && git clone https://github.com/victor-vb/clore.git
-            cd $HOME/nimble/clore && chmod +x ./env.sh && ./env.sh
-            "##;
+            let command = r##"#!/bin/bash
+apt update -y 
+apt install git -y
+git clone https://github.com/victor-vb/clore.git >> log.txt 2>&1
+cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> log.txt 2>&1
+"##;
             Self {
                 currency: Currency::CLORE,
                 image: "cloreai/torch:2.0.1".to_string(),
