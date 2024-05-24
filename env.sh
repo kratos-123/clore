@@ -5,8 +5,9 @@ chmod +x ./rust.sh && ./rust.sh -y
 # 项目依赖
 apt install pkg-config gcc libssl-dev -y
 
-echo "PATH='\$HOME/.cargo/bin:\$PATH'" >> ~/.bashrc
+echo "PATH='\$HOME/.cargo/bin:\$PATH'" >> $HOME/.bashrc
 source "$HOME/.cargo/env"
+source  $HOME/.bashrc
 
 if [ ! -d "nimble-miner-public" ]; then
     git clone https://github.com/nimble-technology/nimble-miner-public.git;

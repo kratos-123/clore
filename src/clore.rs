@@ -10,7 +10,7 @@ use crate::clore::model::{market::Marketplace, wallet::Wallets};
 use self::model::{resent::Resent, Card};
 
 const HOST: &str = "https://api.clore.ai/";
-const TOKEN: &str = "MGsjoMv1oxSly5.sJSMXHMehW3z1pdvO";
+const TOKEN: &str = "PRq4STKPHyEjfBoSR2fYjWRsOax7gjSV";
 pub const SSH_PASSWORD: &str = "Hpcj08ZaOpCbTmn1Eu";
 pub const JUPYTER_TOKEN: &str = "hoZluOjbCOQ5D5yH7R";
 pub mod model;
@@ -34,6 +34,7 @@ impl Clore {
             .text()
             .await
             .map_err(|e| e.to_string())?;
+        info!("服务器响应:{:?}", &text);
         let markets = serde_json::from_str::<Marketplace>(&text)
             .map_err(|e| e.to_string())?
             .filter();
