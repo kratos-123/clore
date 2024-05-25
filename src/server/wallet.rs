@@ -1,7 +1,7 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use strum::Display;
 use std::{collections::HashMap, io::Read, sync::Arc};
+use strum::Display;
 use tokio::sync::Mutex;
 use tracing::{error, info, warn};
 
@@ -13,7 +13,7 @@ lazy_static::lazy_static! {
     };
 }
 
-#[derive(Debug,Display, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, Display, PartialEq, Clone, Serialize, Deserialize)]
 pub enum AddressType {
     MASTER,
     SUB,
@@ -29,7 +29,7 @@ pub struct Wallet {
     pub deploy: Deployed,
 }
 
-#[derive(Debug, PartialEq, Clone,Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Deployed {
     NOTASSIGNED,
     DEPLOYING {
@@ -220,7 +220,7 @@ impl Wallets {
             };
             wallet.start_time = Some(local_time);
             Ok(())
-        }else {
+        } else {
             Err("当前地址状态不是待分配状态！".to_string())
         }
     }
@@ -291,12 +291,13 @@ pub async fn pool() {
         let other = Wallets::load_address_file().await;
         row.check(&other).await;
         let wallets = row.filter().await;
-        let address = wallets.iter().map(|wallet|{
-            format!("{},{}", wallet.address,wallet.addr_type)
-        }).collect::<Vec<String>>();
-        
+        let address = wallets
+            .iter()
+            .map(|wallet| format!("{},{}", wallet.address, wallet.addr_type))
+            .collect::<Vec<String>>();
+
         if wallets.len() > 0 {
-            warn!("待分配地址:\n{}",address.join("\n"));
+            warn!("待分配地址:\n{}", address.join("\n"));
             // let market = Clore::default().marketplace().await;
         }
         // info!("市场显卡情况{:?}",market);
