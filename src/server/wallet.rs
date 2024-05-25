@@ -1,9 +1,10 @@
 use chrono::{DateTime, Local};
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, io::Read, sync::Arc};
 use tokio::sync::Mutex;
 use tracing::{error, info, warn};
 
-use crate::clore::{model::market::Marketplace, Clore};
+use crate::server::clore::Clore;
 
 lazy_static::lazy_static! {
     pub static ref WALLETS_STATE:Arc<Mutex<Wallets>> = {
@@ -11,30 +12,35 @@ lazy_static::lazy_static! {
     };
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum AddressType {
     MASTER,
     SUB,
     NULL,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Wallet {
     pub address: String,
-    pub sshaddr: Option<String>,
-    pub sshport: Option<u32>,
     pub addr_type: AddressType,
     pub start_time: Option<DateTime<Local>>,
-    pub order_id: Option<u32>,
     pub report_last_time: Option<DateTime<Local>>,
     pub deploy: Deployed,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone,Serialize, Deserialize)]
 pub enum Deployed {
     NOTASSIGNED,
-    DEPLOYING,
-    DEPLOYED,
+    DEPLOYING {
+        orderid: u32,
+        sshaddr: Option<String>,
+        sshport: Option<u32>,
+    },
+    DEPLOYED {
+        orderid: u32,
+        sshaddr: Option<String>,
+        sshport: Option<u32>,
+    },
 }
 
 impl Wallet {
@@ -42,10 +48,7 @@ impl Wallet {
         Wallet {
             address,
             addr_type,
-            sshaddr: None,
-            sshport: None,
             start_time: None,
-            order_id: None,
             report_last_time: None,
             deploy: Deployed::NOTASSIGNED,
         }
@@ -163,8 +166,8 @@ impl Wallets {
                 continue;
             }
 
-            let (subaddress,mstaddress) =
-                tokio::join!(Wallets::subaddress(&address),Wallets::mstaddress(&address));
+            let (subaddress, mstaddress) =
+                tokio::join!(Wallets::subaddress(&address), Wallets::mstaddress(&address));
             info!("地址检测结果:{:?},{:?}", mstaddress, subaddress);
             let addr_type = if let AddressType::MASTER = mstaddress {
                 AddressType::MASTER
@@ -202,19 +205,23 @@ impl Wallets {
         order_id: u32,
         sshaddr: String,
         sshport: u32,
-    ) -> Result<bool, String> {
+    ) -> Result<(), String> {
         if !(*self).contains_key(wallet_adress) {
             return Err("不存在钱包地址！".to_string());
         }
         let local_time = Local::now();
         let wallet = (*self).get_mut(wallet_adress).unwrap();
-        wallet.deploy = Deployed::DEPLOYING;
-        wallet.start_time = Some(local_time);
-        wallet.sshaddr = Some(sshaddr);
-        wallet.sshport = Some(sshport);
-        wallet.order_id = Some(order_id);
-
-        Ok(true)
+        if Deployed::NOTASSIGNED == wallet.deploy {
+            wallet.deploy = Deployed::DEPLOYING {
+                orderid: order_id,
+                sshaddr: Some(sshaddr),
+                sshport: Some(sshport),
+            };
+            wallet.start_time = Some(local_time);
+            Ok(())
+        }else {
+            Err("当前地址状态不是待分配状态！".to_string())
+        }
     }
 
     pub async fn update_log_collect_time(&mut self, wallet_adress: &str) -> bool {
@@ -222,9 +229,21 @@ impl Wallets {
             return false;
         }
         let wallet = (*self).get_mut(wallet_adress).unwrap();
-        let local_time = Local::now();
-        wallet.report_last_time = Some(local_time);
-        wallet.deploy = Deployed::DEPLOYED;
+        if let Deployed::DEPLOYING {
+            orderid,
+            sshaddr,
+            sshport,
+        } = &wallet.deploy
+        {
+            let local_time = Local::now();
+            wallet.report_last_time = Some(local_time);
+            wallet.deploy = Deployed::DEPLOYED {
+                orderid: orderid.clone(),
+                sshaddr: sshaddr.clone(),
+                sshport: sshport.clone(),
+            };
+        }
+
         true
     }
 
@@ -233,19 +252,21 @@ impl Wallets {
         let mut order_ids: Vec<u32> = Vec::new();
         for (_, wallet) in (*self).iter_mut() {
             let nowtime = Local::now();
-
-            if let Some(order_id) = wallet.order_id {
-                // 上报时间若是超过了十分钟，则也取消，订单号
-                if let Some(report_last_time) = wallet.report_last_time {
-                    if nowtime.timestamp() - report_last_time.timestamp() > 10 * 60 {
-                        order_ids.push(order_id);
-                    }
-                } else {
-
+            match &wallet.deploy {
+                Deployed::NOTASSIGNED => {}
+                Deployed::DEPLOYING { orderid, .. } => {
                     // 创建时间超过15分钟，还未有上报时间则，进行取消订单
                     if let Some(start_time) = wallet.start_time {
                         if nowtime.timestamp() - start_time.timestamp() > 15 * 60 {
-                            order_ids.push(order_id);
+                            order_ids.push(orderid.clone());
+                        }
+                    }
+                }
+                Deployed::DEPLOYED { orderid, .. } => {
+                    // 上报时间若是超过了十分钟，则也取消，订单号
+                    if let Some(report_last_time) = wallet.report_last_time {
+                        if nowtime.timestamp() - report_last_time.timestamp() > 10 * 60 {
+                            order_ids.push(orderid.clone());
                         }
                     }
                 }
@@ -254,12 +275,11 @@ impl Wallets {
         for order_id in order_ids.iter() {
             let result = clore.cancel_order(order_id.clone()).await;
             if let Err(e) = result {
-                error!("订单:{:?}取消失败,错误码：{:?}",order_id,e);
-            }else {
-                warn!("已取消{:?}该订单",order_id);
+                error!("订单:{:?}取消失败,错误码：{:?}", order_id, e);
+            } else {
+                warn!("已取消{:?}该订单", order_id);
             }
         }
-
     }
 }
 
@@ -268,11 +288,11 @@ pub async fn pool() {
         let wallets = Arc::clone(&WALLETS_STATE);
         let mut row = wallets.lock().await;
         let other = Wallets::load_address_file().await;
-        let wallets = row.filter().await;
         row.check(&other).await;
-        warn!("未分配钱包{:?}",wallets);
+        let wallets = row.filter().await;
+        warn!("未分配钱包{:?}", wallets);
         if wallets.len() > 0 {
-            let market = Clore::default().marketplace().await;   
+            // let market = Clore::default().marketplace().await;
         }
         // info!("市场显卡情况{:?}",market);
 

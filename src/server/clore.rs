@@ -1,20 +1,18 @@
-use std::{collections::HashMap, process::Stdio};
 #[allow(dead_code)]
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client, ClientBuilder,
 };
 use serde_json::Value;
-use tracing::{error, info, warn};
+use std::collections::HashMap;
+use tracing::info;
 
 use self::model::{resent::Resent, Card};
-use crate::clore::model::{market::Marketplace, wallet::Wallets};
-use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::process::Command;
+use crate::server::clore::model::{market::Marketplace, wallet::Wallets};
 
 pub const HOST: &str = "https://api.clore.ai/";
 pub const TOKEN: &str = "2cFfpo5r18VwgEaArcPI_lYaVKm_-rXL";
-pub const SSH_PASSWORD: &str = "Hpcj08ZaOpCbTmn1Eu";
+pub const SSH_PASSWORD: &str = "lurq9SVzxGhpvok-Lkq8Lbb4iNI1u1vB";
 pub const JUPYTER_TOKEN: &str = "hoZluOjbCOQ5D5yH7R";
 pub const LOG_COLLECT_API: &str = "http://127.0.0.1:8888/printlnlog";
 pub mod model;
@@ -134,6 +132,9 @@ impl Clore {
     fn get_client() -> Result<Client, reqwest::Error> {
         let mut headers = HeaderMap::new();
         headers.insert("auth", HeaderValue::from_static(&TOKEN));
-        ClientBuilder::new().default_headers(headers).timeout(std::time::Duration::from_secs(30)).build()
+        ClientBuilder::new()
+            .default_headers(headers)
+            .timeout(std::time::Duration::from_secs(30))
+            .build()
     }
 }

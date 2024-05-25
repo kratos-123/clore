@@ -1,9 +1,12 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post};
 use tracing::error;
 use tracing::{info, warn};
 
+pub mod clore;
+pub mod wallet;
+
 #[get("/distribute_address")]
-pub async fn distribute_address()->String {
+pub async fn distribute_address() -> String {
     unimplemented!()
 }
 

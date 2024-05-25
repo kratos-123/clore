@@ -17,23 +17,23 @@ fi
 
 cd nimble-miner-public
 
-# python3 -m venv ./venv
-# source ./venv/bin/activate
+python3 -m venv ./venv
+source ./venv/bin/activate
 
-# python3 -m pip install --upgrade pip
-# python3 -m pip install requests==2.31.0 
-# python3 -m pip install torch==2.2.1
-# python3 -m pip install accelerate==0.27.0 
-# python3 -m pip install transformers==4.38.1 
-# python3 -m pip install datasets==2.17.1 
-# python3 -m pip install numpy
-# python3 -m pip install gitpython==3.1.42 
-# python3 -m pip install prettytable==3.10.0
+python3 -m pip install --upgrade pip
+python3 -m pip install requests==2.31.0 
+python3 -m pip install torch==2.2.1
+python3 -m pip install accelerate==0.27.0 
+python3 -m pip install transformers==4.38.1 
+python3 -m pip install datasets==2.17.1 
+python3 -m pip install numpy
+python3 -m pip install gitpython==3.1.42 
+python3 -m pip install prettytable==3.10.0
 
 echo "env aready done"
 
 cd $HOME/clore
-screen -S nimble cargo run -r 
+screen -S nimble cargo run -r --bin monitor
 
 
 # 此文件由服务创建时自动运行

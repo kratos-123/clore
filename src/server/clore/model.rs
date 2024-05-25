@@ -1,27 +1,28 @@
-use std::{os::windows::process, str::FromStr};
+use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
 
-#[derive(Debug, PartialEq, EnumString,Display)]
+#[repr(u8)]
+#[derive(Debug, PartialEq, EnumString, Display, Eq, PartialOrd, Ord)]
 pub enum CardType {
-    NVIDIA4090,
-    NVIDIA4080S,
-    NVIDIA4080,
-    NVIDIA4070S,
-    NVIDIA4070,
-    NVIDIA4070TI,
-    NVIDIA3090,
-    NVIDIA3090TI,
-    NVIDIA3080TI,
-    NVIDIA3080,
-    NVIDIA1080TI,
-    NVIDIA1080,
+    NVIDIA4090 = 1,
+    NVIDIA4080S = 2,
+    NVIDIA4080 = 3,
+    NVIDIA4070S = 4,
+    NVIDIA4070 = 5,
+    NVIDIA4070TI = 6,
+    NVIDIA3090 = 7,
+    NVIDIA3090TI = 8,
+    NVIDIA3080TI = 9,
+    NVIDIA3080 = 10,
+    NVIDIA1080TI = 11,
+    NVIDIA1080 = 12,
     UNKNOWN(String),
 }
 
 impl CardType {
-    pub fn get_max_price(&self,card_number:f64)->f64 {
+    pub fn get_max_price(&self, card_number: f64) -> f64 {
         let price = match self {
             CardType::NVIDIA4090 => 32f64,
             CardType::NVIDIA4080S => 24f64,
@@ -72,7 +73,7 @@ impl ToString for Currency {
 #[derive(Debug)]
 pub struct Card {
     pub server_id: u32,
-    pub avg_score:f64,
+    pub avg_score: f64,
     pub price_demand: f64,
     pub avg_price_demand: f64,
     pub price_spot: f64,
@@ -144,7 +145,7 @@ pub mod market {
     impl Marketplace {
         pub fn filter(&self) -> Vec<Card> {
             let regex = Regex::new(r"(3080|3090|4070|4080|4080|4090)").unwrap();
-            let cards: Vec<Card> = (*self)
+            let mut cards: Vec<Card> = (*self)
                 .iter()
                 .filter(|item| {
                     let machine_properties = &item.specs;
@@ -204,7 +205,7 @@ pub mod market {
                     let avg_score = *avg_score as f64;
                     let card = Card {
                         server_id: item.id,
-                        avg_score:avg_score,
+                        avg_score: avg_score,
                         price_demand: price_demand,
                         avg_price_demand: avg_price_demand,
                         price_spot: price_spot,
@@ -219,27 +220,28 @@ pub mod market {
                 .filter(|item| {
                     let total_max_price = item.card_type.get_max_price(item.card_number as f64);
                     match item.card_type {
-                        CardType::UNKNOWN(_)=>{
+                        CardType::UNKNOWN(_) => {
                             warn!("未知显卡:{:?}", item.card_type);
                             false
                         }
-                        _ if total_max_price > item.avg_price_demand =>{
-                            true
-                        },
-                        _=>false
+                        _ if total_max_price > item.avg_price_demand => true,
+                        _ => false,
                     }
                 })
                 .collect();
+            cards.sort_by(|a, b| b.card_type.cmp(&a.card_type));
+            cards.reverse();
             for item in cards.iter() {
                 let log = format!(
-                    "服务器id:{},显卡型号:{:>12},用户评分：{:.1},显卡数量:{},卖家价格:{:.3},买家出价:{:.3},均价：{:.3}",
+                    "服务器id:{:>5},显卡型号:{:>12},用户评分：{:.1},显卡数量:{:2},卖家价格:{:>3.3},卖家均价:{:>3.3},买家出价:{:>3.3},买家均价:{:>3.3}",
                     item.server_id,
                     item.card_type,
                     item.avg_score,
                     item.card_number,
+                    item.price_demand,
                     item.avg_price_demand,
                     item.card_type.get_max_price(item.card_number.clone() as f64),
-                    item.card_type.get_max_price(item.card_number.clone() as f64)/(item.card_number.clone() as f64)
+                    item.card_type.get_max_price(1f64)
                 );
                 println!("{:?}", log);
             }
@@ -309,7 +311,7 @@ pub mod resent {
 
     use serde::{Deserialize, Serialize};
 
-    use crate::clore::{JUPYTER_TOKEN, SSH_PASSWORD};
+    use crate::server::clore::{JUPYTER_TOKEN, SSH_PASSWORD};
 
     use super::Currency;
 
