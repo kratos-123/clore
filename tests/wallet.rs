@@ -2,7 +2,7 @@
 mod wallet {
     use std::{collections::HashMap, sync::Arc};
 
-    use clore::wallet::{AddressType, Wallet, Wallets, WALLETS_STATE};
+    use monitor::server::wallet::{AddressType, Wallet, Wallets, WALLETS_STATE};
     use tracing::info;
 
     #[tokio::test]

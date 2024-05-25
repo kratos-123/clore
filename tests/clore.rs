@@ -2,7 +2,7 @@
 mod test {
     use std::{any::Any, io::Read};
 
-    use clore::clore::{
+    use monitor::server::clore::{
         model::{market::Marketplace, Card},
         Clore,
     };
@@ -44,4 +44,11 @@ mod test {
 
         assert_eq!(std::any::TypeId::of::<Vec<Card>>(), cards.type_id())
     }
+
+    #[tokio::test]
+    async fn create_order_test(){
+        tracing_subscriber::fmt::init();
+        let result = Clore::default().create_order(22232).await;
+    }
+        
 }

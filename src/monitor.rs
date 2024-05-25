@@ -58,6 +58,9 @@ pub async fn log_collect() {
 
 async fn collect_files(paths: &mut HashMap<String, Log>) {
     let path = std::env::current_dir().unwrap().join("log");
+    if !path.exists() {
+        let _ = std::fs::create_dir_all(&path);
+    }
     let result = path.read_dir();
     for entry in result.unwrap() {
         if entry.is_ok() {

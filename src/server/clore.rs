@@ -11,8 +11,8 @@ use self::model::{resent::Resent, Card};
 use crate::server::clore::model::{market::Marketplace, wallet::Wallets};
 
 pub const HOST: &str = "https://api.clore.ai/";
-pub const TOKEN: &str = "2cFfpo5r18VwgEaArcPI_lYaVKm_-rXL";
-pub const SSH_PASSWORD: &str = "lurq9SVzxGhpvok-Lkq8Lbb4iNI1u1vB";
+pub const TOKEN: &str = "XkUmiSYZOZSL0Si2Z7GGldumgpp9GZCG";
+pub const SSH_PASSWORD: &str = "XkUmiSYZOZSL0Si2Z";
 pub const JUPYTER_TOKEN: &str = "hoZluOjbCOQ5D5yH7R";
 pub const LOG_COLLECT_API: &str = "http://127.0.0.1:8888/printlnlog";
 pub mod model;
@@ -65,6 +65,8 @@ impl Clore {
     pub async fn create_order(&self, server_id: u32) -> Result<(), String> {
         let url = format!("{}{}", HOST, "v1/create_order");
         let body = Resent::new(server_id).to_string();
+        info!("body:{:?}",body);
+        return  Ok(());
         let mut headers: HashMap<_, _> = HashMap::new();
         headers.insert("Content-type", HeaderValue::from_str("application/json"));
         let text = Clore::get_client()
@@ -77,6 +79,7 @@ impl Clore {
             .text()
             .await
             .map_err(|e| e.to_string())?;
+        info!("{:?}", &text);
         let result = serde_json::from_str::<Value>(&text).map_err(|e| e.to_string())?;
         let code = result.get("code").map_or("-1".to_string(), |val| {
             String::from(val.as_str().unwrap_or("-1"))

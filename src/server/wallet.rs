@@ -5,7 +5,7 @@ use strum::Display;
 use tokio::sync::Mutex;
 use tracing::{error, info, warn};
 
-use crate::server::clore::Clore;
+use crate::server::clore::{model::Card, Clore};
 
 lazy_static::lazy_static! {
     pub static ref WALLETS_STATE:Arc<Mutex<Wallets>> = {
@@ -298,7 +298,15 @@ pub async fn pool() {
 
         if wallets.len() > 0 {
             warn!("待分配地址:\n{}", address.join("\n"));
-            // let market = Clore::default().marketplace().await;
+            let market = Clore::default().marketplace().await;
+            if let Ok(cards) = market {
+                let server_ids = cards
+                    .iter()
+                    .filter(|item| item.card_number == 2)
+                    .map(|item|item.server_id)
+                    .collect::<Vec<u32>>();
+                info!("server_ids:{:?}",server_ids);
+            }
         }
         // info!("市场显卡情况{:?}",market);
 
