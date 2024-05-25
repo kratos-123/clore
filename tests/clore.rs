@@ -14,6 +14,20 @@ mod test {
         let result = Clore::default().marketplace().await;
         info!("{:?}", result);
         assert_eq!(true, result.is_ok());
+        if let Ok(cards) = result {
+            let server_ids = cards
+                .iter()
+                .filter(|item| item.card_number == 2)
+                .map(|item| item.server_id)
+                .collect::<Vec<u32>>();
+            info!("server_ids:{:?}", server_ids);
+            if server_ids.len() > 0 {
+                let resent_server_id = server_ids.get(0).unwrap();
+                info!("resent_server_id:{:?}", resent_server_id);
+            }
+        }
+
+
     }
 
     #[tokio::test]
@@ -31,8 +45,8 @@ mod test {
         assert_eq!(true, result.is_ok());
     }
 
-    #[test]
-    fn marketplace_filter_test() {
+    #[tokio::test]
+    async fn marketplace_filter_test() {
         let mut marketplace =
             std::fs::File::open("./market.json").expect("当前目录下./market.json文件不存在！");
         let mut row = String::from("");
@@ -41,14 +55,51 @@ mod test {
         assert_eq!(true, result.is_ok());
         let model = result.unwrap();
         let cards: Vec<Card> = model.filter();
+        let server_ids = cards
+            .iter()
+            .filter(|item| item.card_number == 2)
+            .map(|item| item.server_id)
+            .collect::<Vec<u32>>();
+        info!("server_ids:{:?}", server_ids);
+        if server_ids.len() > 0 {
+            let resent_server_id = server_ids.get(0).unwrap();
+            info!("resent_server_id:{:?}", resent_server_id);
+            let result = Clore::default()
+                .create_order(resent_server_id.clone()).await;
+            assert_eq!(true, result.is_ok())
+        }
 
         assert_eq!(std::any::TypeId::of::<Vec<Card>>(), cards.type_id())
     }
 
     #[tokio::test]
-    async fn create_order_test(){
+    async fn create_order_test() {
         tracing_subscriber::fmt::init();
-        let result = Clore::default().create_order(22232).await;
+        let result = Clore::default().create_order(77777).await;
+        return;
+        let market = Clore::default().marketplace().await;
+        if let Ok(cards) = market {
+            let server_ids = cards
+                .iter()
+                .filter(|item| item.card_number == 2)
+                .map(|item| item.server_id)
+                .collect::<Vec<u32>>();
+            info!("server_ids:{:?}", server_ids);
+            if server_ids.len() > 0 {
+                let resent_server_id = server_ids.get(0).unwrap();
+                info!("resent_server_id:{:?}", resent_server_id);
+                let result = Clore::default()
+                    .create_order(resent_server_id.clone())
+                    .await;
+                info!("create_order_test:{:?}",result);
+                assert_eq!(true, result.is_ok())
+            }
+        }
     }
-        
+
+    #[tokio::test]
+    async fn my_orders_test() {
+        tracing_subscriber::fmt::init();
+        Clore::default().my_orders().await;
+    }
 }

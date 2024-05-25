@@ -45,7 +45,9 @@ impl CardType {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum Currency {
+    #[serde(rename(serialize = "bitcoin"))]
     BITCOIN,
+    #[serde(rename(serialize = "CLORE-Blockchain"))]
     CLORE,
 }
 
@@ -153,7 +155,7 @@ pub mod market {
                     regex.is_match(&gpu)
                         && item.rating.get("avg").unwrap_or(&0f32) > &4.5f32
                         && item.allowed_coins.contains(&"CLORE-Blockchain".to_string())
-                        && item.rented
+                        && !item.rented
                 })
                 .map(|item| {
                     let card_info = item
@@ -311,7 +313,7 @@ pub mod resent {
 
     use serde::{Deserialize, Serialize};
 
-    use crate::server::clore::{JUPYTER_TOKEN, SSH_PASSWORD};
+    use crate::server::clore::SSH_PASSWORD;
 
     use super::Currency;
 
@@ -322,18 +324,17 @@ pub mod resent {
         renting_server: u32,
         #[serde(rename(serialize = "type"))]
         demand: String,
-        ports: HashMap<String, String>,
+        ports: HashMap<u32, String>,
         env: HashMap<String, String>,
-        jupyter_token: String,
         ssh_password: String,
         command: String,
     }
 
     impl Resent {
         pub fn new(server_id: u32) -> Resent {
-            let mut ports = HashMap::<String, String>::new();
-            ports.insert("22".to_string(), "tcp".to_string());
-            ports.insert("8888".to_string(), "http".to_string());
+            let mut ports = HashMap::<u32, String>::new();
+            ports.insert(22, "tcp".to_string());
+            ports.insert(8888, "http".to_string());
             let command = r##"#!/bin/bash
 apt update -y 
 apt install git -y
@@ -347,7 +348,6 @@ cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> log/server.txt 2
                 demand: "on-demand".to_string(),
                 ports: ports,
                 env: Default::default(),
-                jupyter_token: JUPYTER_TOKEN.to_string(),
                 ssh_password: SSH_PASSWORD.to_string(),
                 command: command.to_string(),
             }
@@ -366,7 +366,10 @@ pub mod my_orders {
 
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Order {
+        #[serde(alias = "id")]
         order_id: i32,
+        #[serde(alias = "si")]
+        server_id:i32,
         pub_cluster: Vec<String>,
         tcp_ports: Vec<String>,
         http_port: String,

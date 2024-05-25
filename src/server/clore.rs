@@ -8,12 +8,12 @@ use std::collections::HashMap;
 use tracing::info;
 
 use self::model::{resent::Resent, Card};
-use crate::server::clore::model::{market::Marketplace, wallet::Wallets};
+use crate::server::clore::model::{market::Marketplace, my_orders::MyOrders, wallet::Wallets};
 
 pub const HOST: &str = "https://api.clore.ai/";
 pub const TOKEN: &str = "ka61_7QH_Tk6k0S8_GDcy3TR.aIz55gb";
 pub const SSH_PASSWORD: &str = "XkUmiSYZOZSL0Si2Z";
-pub const JUPYTER_TOKEN: &str = "hoZluOjbCOQ5D5yH7R";
+// pub const JUPYTER_TOKEN: &str = "hoZluOjbCOQ5D5yH7R";
 pub const LOG_COLLECT_API: &str = "http://127.0.0.1:8888/printlnlog";
 pub mod model;
 pub struct Clore {}
@@ -64,13 +64,15 @@ impl Clore {
 
     pub async fn create_order(&self, server_id: u32) -> Result<(), String> {
         let url = format!("{}{}", HOST, "v1/create_order");
-        let body = Resent::new(server_id).to_string();
+        let body = Resent::new(server_id);
+        info!("body:{}", serde_json::to_string(&body).unwrap());
+        return Ok(());
         let mut headers: HashMap<_, _> = HashMap::new();
         headers.insert("Content-type", HeaderValue::from_str("application/json"));
         let text = Clore::get_client()
             .map_err(|e| e.to_string())?
             .post(url)
-            .body(body)
+            .json(&body)
             .send()
             .await
             .map_err(|e| e.to_string())?
@@ -93,7 +95,7 @@ impl Clore {
         }
     }
 
-    pub async fn my_orders() -> Result<(), String> {
+    pub async fn my_orders(&self) -> Result<(), String> {
         let url = format!("{}{}", HOST, "v1/my_orders");
         let text = Clore::get_client()
             .map_err(|e| e.to_string())?
@@ -104,12 +106,10 @@ impl Clore {
             .text()
             .await
             .map_err(|e| e.to_string())?;
-        let result = serde_json::from_str::<Value>(&text).map_err(|e| e.to_string())?;
-        let code = result.get("code").map_or("-1".to_string(), |val| {
-            String::from(val.as_str().unwrap_or("-1"))
-        });
-
-        todo!("获取到订单号")
+        info!("my_order_text:{:?}", text);
+        let result = serde_json::from_str::<MyOrders>(&text).map_err(|e| e.to_string());
+        info!("获取到订单号:{:?}", result);
+        Ok(())
     }
 
     pub async fn cancel_order(&self, order_id: u32) -> Result<(), String> {

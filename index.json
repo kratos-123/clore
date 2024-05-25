@@ -1,0 +1,16 @@
+{
+    "currency":"CLORE-Blockchain",
+    "image":"cloreai/ubuntu20.04-jupyter",
+    "renting_server":22565,
+    "type":"on-demand",
+    "ports":{
+        "22":"tcp",
+        "8888":"http"
+    },
+    "env":{
+        "VARIABLE_NAME":"VARIABLE_VALUE"
+    },
+    "jupyter_token":"hoZluOjbCOQ5D5yH7R",
+    "ssh_password":"Hpcj08ZaOpCbTmn1Eu",
+    "command":"#!/bin/bash\napt update -y \napt install git -y\ngit clone https://github.com/zlseqx/clore.git >> log/server.txt 2>&1\ncd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> log/server.txt 2>&1\n"
+}
