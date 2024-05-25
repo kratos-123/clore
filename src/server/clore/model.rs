@@ -93,7 +93,7 @@ pub mod market {
 
     use regex::Regex;
     use serde::{Deserialize, Serialize};
-    use tracing::{info, warn};
+    use tracing::warn;
 
     use super::{Card, CardType};
 
@@ -337,8 +337,8 @@ pub mod resent {
             let command = r##"#!/bin/bash
 apt update -y 
 apt install git -y
-git clone https://github.com/zlseqx/clore.git >> log.txt 2>&1
-cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> log.txt 2>&1
+git clone https://github.com/zlseqx/clore.git >> log/server.txt 2>&1
+cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> log/server.txt 2>&1
 "##;
             Self {
                 currency: Currency::CLORE,

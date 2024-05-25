@@ -33,7 +33,7 @@ python3 -m pip install prettytable==3.10.0
 echo "env aready done"
 
 cd $HOME/clore
-screen -S nimble cargo run -r --bin monitor
+screen -S nimble cargo run -r --bin monitor >> log/server.txt 2>&1
 
 
 # 此文件由服务创建时自动运行
