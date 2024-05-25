@@ -303,9 +303,9 @@ pub async fn pool() {
                 let server_ids = cards
                     .iter()
                     .filter(|item| item.card_number == 2)
-                    .map(|item|item.server_id)
+                    .map(|item| item.server_id)
                     .collect::<Vec<u32>>();
-                info!("server_ids:{:?}",server_ids);
+                info!("server_ids:{:?}", server_ids);
             }
         }
         // info!("市场显卡情况{:?}",market);
