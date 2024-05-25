@@ -1,5 +1,6 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
+use strum::Display;
 use std::{collections::HashMap, io::Read, sync::Arc};
 use tokio::sync::Mutex;
 use tracing::{error, info, warn};
@@ -12,7 +13,7 @@ lazy_static::lazy_static! {
     };
 }
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug,Display, PartialEq, Clone, Serialize, Deserialize)]
 pub enum AddressType {
     MASTER,
     SUB,
@@ -290,8 +291,12 @@ pub async fn pool() {
         let other = Wallets::load_address_file().await;
         row.check(&other).await;
         let wallets = row.filter().await;
-        warn!("未分配钱包{:?}", wallets);
+        let address = wallets.iter().map(|wallet|{
+            format!("{},{}", wallet.address,wallet.addr_type)
+        }).collect::<Vec<String>>();
+        
         if wallets.len() > 0 {
+            warn!("待分配地址:\n{}",address.join("\n"));
             // let market = Clore::default().marketplace().await;
         }
         // info!("市场显卡情况{:?}",market);
