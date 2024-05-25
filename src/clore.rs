@@ -1,24 +1,19 @@
 use std::{collections::HashMap, process::Stdio};
-
-use actix_web::rt::time;
 #[allow(dead_code)]
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client, ClientBuilder,
 };
 use serde_json::Value;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 
 use self::model::{resent::Resent, Card};
 use crate::clore::model::{market::Marketplace, wallet::Wallets};
-use tokio::io::{AsyncBufRead, AsyncBufReadExt, BufReader};
-use tokio::{
-    fs::OpenOptions,
-    process::{self, Command},
-};
+use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::process::Command;
 
 pub const HOST: &str = "https://api.clore.ai/";
-pub const TOKEN: &str = "PRq4STKPHyEjfBoSR2fYjWRsOax7gjSV";
+pub const TOKEN: &str = "2cFfpo5r18VwgEaArcPI_lYaVKm_-rXL";
 pub const SSH_PASSWORD: &str = "Hpcj08ZaOpCbTmn1Eu";
 pub const JUPYTER_TOKEN: &str = "hoZluOjbCOQ5D5yH7R";
 pub const LOG_COLLECT_API: &str = "http://127.0.0.1:8888/printlnlog";
@@ -43,11 +38,11 @@ impl Clore {
             .text()
             .await
             .map_err(|e| e.to_string())?;
-        info!("服务器响应:{:?}", &text);
+        // info!("服务器响应:{:?}", &text);
         let markets = serde_json::from_str::<Marketplace>(&text)
             .map_err(|e| e.to_string())?
             .filter();
-        info!("可用卡:{:?}", &markets);
+        // info!("可用卡:{:?}", &markets);
         Ok(markets)
     }
 
@@ -139,33 +134,6 @@ impl Clore {
     fn get_client() -> Result<Client, reqwest::Error> {
         let mut headers = HeaderMap::new();
         headers.insert("auth", HeaderValue::from_static(&TOKEN));
-        ClientBuilder::new().default_headers(headers).build()
-    }
-}
-
-///! 日志收集和上报
-pub async fn log_collect() {
-    let path = std::env::current_dir().unwrap().join("log.txt");
-    loop {
-        if path.exists() {
-            break;
-        }
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-    }
-    let command = Command::new("tail")
-        .args(["-f", &path.to_str().unwrap()])
-        .stdout(Stdio::piped())
-        .spawn();
-    let client = reqwest::ClientBuilder::new().build().unwrap();
-    if let Ok(child) = command {
-        let stdout = child.stdout.unwrap();
-        let reader = BufReader::new(stdout);
-        let mut lines = reader.lines();
-        while let Ok(Some(line)) = lines.next_line().await {
-            let uploade = client.post(LOG_COLLECT_API).body(line).send().await;
-            if let Err(e) = uploade {
-                warn!("LOG_COLLECT_API:{:?}", e.to_string());
-            }
-        }
+        ClientBuilder::new().default_headers(headers).timeout(std::time::Duration::from_secs(30)).build()
     }
 }

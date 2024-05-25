@@ -488,25 +488,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "98cc8fbded0c607b7ba9dd60cd98df59af97e84d24e49c8557331cfc26d301ce"
 
 [[package]]
-name = "clore"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "chrono",
- "clap",
- "config",
- "lazy_static",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "strum",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "colorchoice"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1177,6 +1158,25 @@ dependencies = [
  "log",
  "wasi",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "monitor"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "chrono",
+ "clap",
+ "config",
+ "lazy_static",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "strum",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

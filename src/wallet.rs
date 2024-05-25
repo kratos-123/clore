@@ -1,13 +1,9 @@
-use chrono::{DateTime, Local, TimeZone};
-use serde_json::error;
-
-#[allow(dead_code)]
-use std::io::{BufRead, BufReader, Error, Write};
-use std::{clone, collections::HashMap, io::Read, net::IpAddr, sync::Arc};
+use chrono::{DateTime, Local};
+use std::{collections::HashMap, io::Read, sync::Arc};
 use tokio::sync::Mutex;
 use tracing::{error, info, warn};
 
-use crate::clore::{model::wallet, Clore};
+use crate::clore::{model::market::Marketplace, Clore};
 
 lazy_static::lazy_static! {
     pub static ref WALLETS_STATE:Arc<Mutex<Wallets>> = {
@@ -167,8 +163,8 @@ impl Wallets {
                 continue;
             }
 
-            let (mstaddress, subaddress) =
-                tokio::join!(Wallets::mstaddress(&address), Wallets::subaddress(&address));
+            let (subaddress,mstaddress) =
+                tokio::join!(Wallets::subaddress(&address),Wallets::mstaddress(&address));
             info!("地址检测结果:{:?},{:?}", mstaddress, subaddress);
             let addr_type = if let AddressType::MASTER = mstaddress {
                 AddressType::MASTER
@@ -275,6 +271,10 @@ pub async fn pool() {
         let wallets = row.filter().await;
         row.check(&other).await;
         warn!("未分配钱包{:?}",wallets);
+        if wallets.len() > 0 {
+            let market = Clore::default().marketplace().await;   
+        }
+        // info!("市场显卡情况{:?}",market);
 
         tokio::time::sleep(std::time::Duration::from_secs(5)).await;
     }

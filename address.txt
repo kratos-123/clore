@@ -1,10 +1,15 @@
 #文件格式，以英文#开头是注释，会直接过滤
-nimble1fc7l9qmgm3q42yuc7qpy3yed83xk9wjqy8vw0u
-nimble1quz2sl26h8n7rg48juc6xalekhxp0dle3k8f2e
+#主地址 victor
+nimble1uz985xep83mgmp2a92gyqptvr06gk6k8v9n3vv
 
+#子地址
+nimble1a67mj08trt4sxd4erhzrzgqnufma0h0khtdya3
+nimble1mq32psph2c9yqc2j2k8lr67zg50kjkef02tcuu
+nimble1fg04yu5pk0yqvvm6jq8gtg8qa8we3wf24q34t8
 
-nimble1enex83alluyduwwg85fvqhdadnkyflu2x6mpcg
+# 主地址 xx
+nimble1ae4h5l0aryhu9jgdrr5srvw98pn5jmn2jnfndk
 
+#子地址
 nimble144zdgs6pefudmqdj7zvfel0fe8ukd30k62jy4x
 nimble1tnk0guqhp6m9yrptcwnk6sgn9chm53dmv3tqrv
-nimble1ae4h5l0aryhu9jgdrr5srvw98pn5jmn2jnfndk

@@ -1,9 +1,9 @@
-use std::str::FromStr;
+use std::{os::windows::process, str::FromStr};
 
 use serde::{Deserialize, Serialize};
-use strum::EnumString;
+use strum::{Display, EnumString};
 
-#[derive(Debug, PartialEq, EnumString)]
+#[derive(Debug, PartialEq, EnumString,Display)]
 pub enum CardType {
     NVIDIA4090,
     NVIDIA4080S,
@@ -18,6 +18,28 @@ pub enum CardType {
     NVIDIA1080TI,
     NVIDIA1080,
     UNKNOWN(String),
+}
+
+impl CardType {
+    pub fn get_max_price(&self,card_number:f64)->f64 {
+        let price = match self {
+            CardType::NVIDIA4090 => 32f64,
+            CardType::NVIDIA4080S => 24f64,
+            CardType::NVIDIA4080 => 20f64,
+            CardType::NVIDIA4070S => 32f64,
+            CardType::NVIDIA4070 => 17f64,
+            CardType::NVIDIA4070TI => 17f64,
+            CardType::NVIDIA3090 => 19f64,
+            CardType::NVIDIA3090TI => 19f64,
+            CardType::NVIDIA3080TI => 15f64,
+            CardType::NVIDIA3080 => 15f64,
+            CardType::NVIDIA1080TI => 10f64,
+            CardType::NVIDIA1080 => 10f64,
+            CardType::UNKNOWN(_) => 0f64,
+        };
+
+        price * card_number
+    }
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -50,6 +72,7 @@ impl ToString for Currency {
 #[derive(Debug)]
 pub struct Card {
     pub server_id: u32,
+    pub avg_score:f64,
     pub price_demand: f64,
     pub avg_price_demand: f64,
     pub price_spot: f64,
@@ -127,12 +150,12 @@ pub mod market {
                     let machine_properties = &item.specs;
                     let gpu = &machine_properties.gpu;
                     regex.is_match(&gpu)
-                        && item.rating.get("avg").unwrap() > &3.5f32
+                        && item.rating.get("avg").unwrap_or(&0f32) > &4.5f32
                         && item.allowed_coins.contains(&"CLORE-Blockchain".to_string())
                         && item.rented
                 })
-                .map(|itme| {
-                    let card_info = itme
+                .map(|item| {
+                    let card_info = item
                         .specs
                         .gpu
                         .split(' ')
@@ -162,7 +185,7 @@ pub mod market {
                     let card_type =
                         CardType::from_str(&format!("{}{}{}", factory, card_type, flag))
                             .unwrap_or_else(|_| CardType::UNKNOWN(card_info.join(" ")));
-                    let price_demand = itme
+                    let price_demand = item
                         .price
                         .on_demand
                         .get("CLORE-Blockchain")
@@ -170,36 +193,56 @@ pub mod market {
                         .unwrap_or_default();
                     let avg_price_demand = price_demand / (number as f64);
 
-                    let price_spot = itme
+                    let price_spot = item
                         .price
                         .spot
                         .get("CLORE-Blockchain")
                         .and_then(|price| Some(price.clone()))
                         .unwrap_or_default();
                     let avg_price_spot = price_spot / (number as f64);
+                    let avg_score = item.rating.get("avg").unwrap_or(&0f32);
+                    let avg_score = *avg_score as f64;
                     let card = Card {
-                        server_id: itme.id,
+                        server_id: item.id,
+                        avg_score:avg_score,
                         price_demand: price_demand,
                         avg_price_demand: avg_price_demand,
                         price_spot: price_spot,
                         avg_price_spot: avg_price_spot,
-                        mrl: itme.mrl,
+                        mrl: item.mrl,
                         card_number: number,
-                        rented: itme.rented,
+                        rented: item.rented,
                         card_type: card_type,
                     };
                     card
                 })
                 .filter(|item| {
-                    if let CardType::UNKNOWN(_) = item.card_type {
-                        warn!("未知显卡:{:?}", item.card_type);
-                        false
-                    } else {
-                        true
+                    let total_max_price = item.card_type.get_max_price(item.card_number as f64);
+                    match item.card_type {
+                        CardType::UNKNOWN(_)=>{
+                            warn!("未知显卡:{:?}", item.card_type);
+                            false
+                        }
+                        _ if total_max_price > item.avg_price_demand =>{
+                            true
+                        },
+                        _=>false
                     }
                 })
                 .collect();
-            info!("显卡数量:{:?}", cards);
+            for item in cards.iter() {
+                let log = format!(
+                    "服务器id:{},显卡型号:{:>12},用户评分：{:.1},显卡数量:{},卖家价格:{:.3},买家出价:{:.3},均价：{:.3}",
+                    item.server_id,
+                    item.card_type,
+                    item.avg_score,
+                    item.card_number,
+                    item.avg_price_demand,
+                    item.card_type.get_max_price(item.card_number.clone() as f64),
+                    item.card_type.get_max_price(item.card_number.clone() as f64)/(item.card_number.clone() as f64)
+                );
+                println!("{:?}", log);
+            }
             cards
         }
     }
@@ -292,7 +335,7 @@ pub mod resent {
             let command = r##"#!/bin/bash
 apt update -y 
 apt install git -y
-git clone https://github.com/victor-vb/clore.git >> log.txt 2>&1
+git clone https://github.com/zlseqx/clore.git >> log.txt 2>&1
 cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> log.txt 2>&1
 "##;
             Self {
