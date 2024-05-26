@@ -34,8 +34,8 @@ python3 -m pip install prettytable==3.10.0
 cd $HOME/clore
 cargo  build -r --bin monitor
 # 运行此命令
-#./env.sh
-cargo run -r --bin monitor >> monitor.txt 2>&1
+#./env.sh >> log/server.txt 2>&1 
+
 
 # 此文件由服务创建时自动运行
 # python3 execute.py $1 
