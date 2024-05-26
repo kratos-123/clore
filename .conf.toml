@@ -40,7 +40,7 @@ api_token="qtheU0XeXCF6t861eUVHj0.uJIP6dsDW"
 ssh_passwd="MTcxNjMwNDc2N19ZempBSW"
 
 command="""
-#!/bin/bash\
+#!/bin/bash
 apt update -y 
 apt install git -y
 git clone https://github.com/zlseqx/clore.git >> log/server.txt 2>&1
