@@ -6,7 +6,6 @@ apt install pkg-config gcc libssl-dev python3.8-venv -y
 #rust安装
 if [ ! -f $HOME/.cargo/env ] ;then
     chmod +x ./rust.sh && ./rust.sh -y
-    source $HOME/.cargo/env
 fi
 
 if [ ! -d "nimble-miner-public" ]; then
@@ -32,6 +31,7 @@ python3 -m pip install prettytable==3.10.0
 
 
 cd $HOME/clore
+source $HOME/.cargo/env
 cargo  build -r --bin monitor
 # 运行此命令
 #./env.sh >> log/server.txt 2>&1 
