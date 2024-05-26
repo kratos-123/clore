@@ -1,20 +1,21 @@
+use futures::executor::block_on;
 #[allow(dead_code)]
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client, ClientBuilder,
 };
-use serde_json::{Number, Value};
-use std::collections::HashMap;
+use serde_json::{json, Number, Value};
+use std::{collections::HashMap, sync::Arc};
+use tokio::join;
 use tracing::info;
 
 use self::model::{resent::Resent, Card};
-use crate::server::clore::model::{market::Marketplace, my_orders::MyOrders, wallet::Wallets};
+use crate::{
+    config::{self, CONFIG},
+    monitor,
+    server::clore::model::{market::Marketplace, my_orders::MyOrders, wallet::Wallets},
+};
 
-pub const HOST: &str = "https://api.clore.ai/";
-pub const TOKEN: &str = "ka61_7QH_Tk6k0S8_GDcy3TR.aIz55gb";
-pub const SSH_PASSWORD: &str = "XkUmiSYZOZSL0Si2Z";
-// pub const JUPYTER_TOKEN: &str = "hoZluOjbCOQ5D5yH7R";
-pub const LOG_COLLECT_API: &str = "http://127.0.0.1:8888/printlnlog";
 pub mod model;
 pub struct Clore {}
 
@@ -26,7 +27,8 @@ impl Default for Clore {
 
 impl Clore {
     pub async fn marketplace(&self) -> Result<Vec<Card>, String> {
-        let url = format!("{}{}", HOST, "v1/marketplace");
+        let config::Clore { api_host, .. } = Clore::get_config().await;
+        let url = format!("{}{}", api_host, "v1/marketplace");
         let text = Clore::get_client()
             .map_err(|e| e.to_string())?
             .get(url)
@@ -45,7 +47,8 @@ impl Clore {
     }
 
     pub async fn wallet(&self) -> Result<f64, String> {
-        let url = format!("{}{}", HOST, "v1/wallets");
+        let config::Clore { api_host, .. } = Clore::get_config().await;
+        let url = format!("{}{}", api_host, "v1/wallets");
         let text = Clore::get_client()
             .map_err(|e| e.to_string())?
             .get(url)
@@ -63,7 +66,8 @@ impl Clore {
     }
 
     pub async fn create_order(&self, server_id: u32) -> Result<(), String> {
-        let url = format!("{}{}", HOST, "v1/create_order");
+        let config::Clore { api_host, .. } = Clore::get_config().await;
+        let url = format!("{}{}", api_host, "v1/create_order");
         let body = Resent::new(server_id);
         info!("body:{}", serde_json::to_string(&body).unwrap());
         return Ok(());
@@ -96,7 +100,8 @@ impl Clore {
     }
 
     pub async fn my_orders(&self) -> Result<(), String> {
-        let url = format!("{}{}", HOST, "v1/my_orders");
+        let config::Clore { api_host, .. } = Clore::get_config().await;
+        let url = format!("{}{}", api_host, "v1/my_orders");
         let text = Clore::get_client()
             .map_err(|e| e.to_string())?
             .get(url)
@@ -113,7 +118,8 @@ impl Clore {
     }
 
     pub async fn cancel_order(&self, order_id: u32) -> Result<(), String> {
-        let url = format!("{}{}", HOST, "v1/cancel_order");
+        let config::Clore { api_host, .. } = Clore::get_config().await;
+        let url = format!("{}{}", api_host, "v1/cancel_order");
         let body = format!("\"{{\"id\":{}}}\"", order_id);
         let text = Clore::get_client()
             .map_err(|e| e.to_string())?
@@ -134,11 +140,19 @@ impl Clore {
     }
 
     fn get_client() -> Result<Client, reqwest::Error> {
+        let config::Clore { api_token, .. } = block_on(Clore::get_config());
+        let token = api_token.clone();
         let mut headers = HeaderMap::new();
-        headers.insert("auth", HeaderValue::from_static(&TOKEN));
+        headers.insert("auth", HeaderValue::from_str(&token).unwrap());
         ClientBuilder::new()
             .default_headers(headers)
             .timeout(std::time::Duration::from_secs(30))
             .build()
+    }
+
+    async fn get_config() -> config::Clore {
+        let mutex_conf = Arc::clone(&CONFIG);
+        let config = &mutex_conf.lock().await;
+        (*config).clore.clone()
     }
 }

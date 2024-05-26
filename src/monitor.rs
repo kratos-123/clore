@@ -10,8 +10,6 @@ use tokio::process::Command;
 use tracing::error;
 use tracing::info;
 
-use crate::server::clore::LOG_COLLECT_API;
-
 #[derive(Debug, Clone)]
 struct Log {
     filename: PathBuf,
@@ -156,15 +154,15 @@ async fn read_log_file(address: String, log: Log) {
 
 pub async fn request(body: &str) {
     info!("上报数据:\n{}", body);
-    let client = ClientBuilder::new().build().unwrap();
-    let result = client
-        .post(LOG_COLLECT_API)
-        .body(body.to_string())
-        .send()
-        .await;
-    if result.is_err() {
-        error!("上报数据失败:{:?}", result);
-    } else {
-        info!("上报成功:{:?}", result)
-    }
+    // let client = ClientBuilder::new().build().unwrap();
+    // let result = client
+    //     .post(LOG_COLLECT_API)
+    //     .body(body.to_string())
+    //     .send()
+    //     .await;
+    // if result.is_err() {
+    //     error!("上报数据失败:{:?}", result);
+    // } else {
+    //     info!("上报成功:{:?}", result)
+    // }
 }

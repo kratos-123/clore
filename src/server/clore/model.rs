@@ -311,9 +311,10 @@ pub mod wallet {
 pub mod resent {
     use std::collections::HashMap;
 
+    use futures::executor::block_on;
     use serde::{Deserialize, Serialize};
 
-    use crate::server::clore::SSH_PASSWORD;
+    use crate::server::clore::Clore;
 
     use super::Currency;
 
@@ -332,15 +333,10 @@ pub mod resent {
 
     impl Resent {
         pub fn new(server_id: u32) -> Resent {
+            let crate::config::Clore{command,ssh_passwd,..} = block_on(Clore::get_config());
             let mut ports = HashMap::<u32, String>::new();
             ports.insert(22, "tcp".to_string());
             ports.insert(8888, "http".to_string());
-            let command = r##"#!/bin/bash
-apt update -y 
-apt install git -y
-git clone https://github.com/zlseqx/clore.git >> log/server.txt 2>&1
-cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> log/server.txt 2>&1
-"##;
             Self {
                 currency: Currency::CLORE,
                 image: "cloreai/torch:2.0.1".to_string(),
@@ -348,8 +344,8 @@ cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> log/server.txt 2
                 demand: "on-demand".to_string(),
                 ports: ports,
                 env: Default::default(),
-                ssh_password: SSH_PASSWORD.to_string(),
-                command: command.to_string(),
+                ssh_password: ssh_passwd,
+                command: command,
             }
         }
     }
@@ -362,6 +358,8 @@ cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> log/server.txt 2
 }
 
 pub mod my_orders {
+    use std::ops::{Deref, DerefMut};
+
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, Debug)]
@@ -369,7 +367,7 @@ pub mod my_orders {
         #[serde(alias = "id")]
         order_id: i32,
         #[serde(alias = "si")]
-        server_id:i32,
+        server_id: i32,
         pub_cluster: Vec<String>,
         tcp_ports: Vec<String>,
         http_port: String,
@@ -379,6 +377,20 @@ pub mod my_orders {
     pub struct MyOrders {
         code: i32,
         orders: Vec<Order>,
+    }
+
+    impl Deref for MyOrders {
+        type Target = Vec<Order>;
+
+        fn deref(&self) -> &Self::Target {
+            &self.orders
+        }
+    }
+
+    impl DerefMut for MyOrders {
+        fn deref_mut(&mut self) -> &mut Self::Target {
+            &mut self.orders
+        }
     }
 
     impl MyOrders {

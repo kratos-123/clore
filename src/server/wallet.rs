@@ -1,11 +1,14 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, io::Read, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 use strum::Display;
 use tokio::sync::Mutex;
 use tracing::{error, info, warn};
 
-use crate::server::clore::{model::Card, Clore};
+use crate::{
+    config::CONFIG,
+    server::clore::{model::Card, Clore},
+};
 
 lazy_static::lazy_static! {
     pub static ref WALLETS_STATE:Arc<Mutex<Wallets>> = {
@@ -142,16 +145,13 @@ impl Wallets {
     }
 
     pub async fn load_address_file() -> Vec<Wallet> {
-        let mut address = std::fs::File::open("./address.txt")
-            .expect("文件:./address.txt不存在！，请创建此文件，");
-        let mut addr = String::new();
-
-        let _ = address.read_to_string(&mut addr);
-
-        addr.split_inclusive('\n')
-            .map(|item| item.trim().to_string())
-            .filter(|item| !item.is_empty() && !item.starts_with("#"))
-            .map(|address| Wallet::new(address, AddressType::NULL))
+        let mutex_conf = Arc::clone(&CONFIG);
+        let config = &mutex_conf.lock().await;
+        config
+            .wallet
+            .address
+            .iter()
+            .map(|address| Wallet::new(address.clone(), AddressType::NULL))
             .collect::<Vec<Wallet>>()
     }
 
@@ -190,13 +190,13 @@ impl Wallets {
     // 过滤规则
     // 未分配订单id的服务器
     pub async fn filter(&self) -> Vec<Wallet> {
-        let mut result: Vec<Wallet> = Vec::new();
+        let mut wallets: Vec<Wallet> = Vec::new();
         for (_, wallet) in (*self).iter() {
             if wallet.addr_type == AddressType::SUB && wallet.deploy == Deployed::NOTASSIGNED {
-                result.push(wallet.clone());
+                wallets.push(wallet.clone());
             }
         }
-        result
+        wallets
     }
 
     // 分配服务器
@@ -287,13 +287,13 @@ impl Wallets {
 pub async fn pool() {
     loop {
         let wallets = Arc::clone(&WALLETS_STATE);
-        let mut row = wallets.lock().await;
+        let mut locked = wallets.lock().await;
         let other = Wallets::load_address_file().await;
-        row.check(&other).await;
-        let wallets = row.filter().await;
+        locked.check(&other).await;
+        let wallets = locked.filter().await;
         let address = wallets
             .iter()
-            .map(|wallet| format!("{},{}", wallet.address, wallet.addr_type))
+            .map(|wallet| wallet.address.to_string())
             .collect::<Vec<String>>();
 
         if wallets.len() > 0 {
@@ -308,8 +308,7 @@ pub async fn pool() {
                 info!("server_ids:{:?}", server_ids);
             }
         }
-        // info!("市场显卡情况{:?}",market);
-
+        drop(locked);
         tokio::time::sleep(std::time::Duration::from_secs(5)).await;
     }
 }

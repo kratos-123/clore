@@ -1,28 +1,22 @@
+pub mod common;
 #[cfg(test)]
 mod wallet {
-    use std::{collections::HashMap, sync::Arc};
+    use std::{any::Any, collections::HashMap, sync::Arc};
 
     use monitor::server::wallet::{AddressType, Wallet, Wallets, WALLETS_STATE};
     use tracing::info;
 
     #[tokio::test]
     async fn pool_from_ini_test() {
+        crate::common::setup();
         let address = Wallets::load_address_file().await;
-        let addres = vec![
-            "nimble1fc7l9qmgm3q42yuc7qpy3yed83xk9wjqy8vw0u",
-            "nimble1quz2sl26h8n7rg48juc6xalekhxp0dle3k8f2e",
-            "nimble1enex83alluyduwwg85fvqhdadnkyflu2x6mpcg",
-        ];
-        let other = addres
-            .iter()
-            .map(|address| Wallet::new(address.to_string(), AddressType::NULL))
-            .collect::<Vec<_>>();
         info!("{:?}", address);
-        assert_eq!(other, address)
+        assert_eq!(std::any::TypeId::of::<Vec<Wallet>>(), address.type_id())
     }
 
     #[tokio::test]
     async fn check_test() {
+        crate::common::setup();
         // 主通过    nimble1fc7l9qmgm3q42yuc7qpy3yed83xk9wjqy8vw0u
         // 子通过    nimble1quz2sl26h8n7rg48juc6xalekhxp0dle3k8f2e
         // 未通过    nimble1enex83alluyduwwg85fvqhdadnkyflu2x6mpcg

@@ -1,0 +1,22 @@
+[wallet]
+address = ["nimble1uz985xep83mgmp2a92gyqptvr06gk6k8v9n3vv", "nimble1a67mj08trt4sxd4erhzrzgqnufma0h0khtdya3", "nimble1mq32psph2c9yqc2j2k8lr67zg50kjkef02tcuu", "nimble1fg04yu5pk0yqvvm6jq8gtg8qa8we3wf24q34t8", "nimble1ae4h5l0aryhu9jgdrr5srvw98pn5jmn2jnfndk", "nimble144zdgs6pefudmqdj7zvfel0fe8ukd30k62jy4x", "nimble1tnk0guqhp6m9yrptcwnk6sgn9chm53dmv3tqrv"]
+
+[monitor]
+api_report_log = "http://127.0.0.1:8888/printlnlog"
+
+[server]
+ip = "127.0.0.1"
+port = 8888
+
+[clore]
+web_api_host = "https://clore.ai/webapi/"
+web_token = "MTcxNjY5NjAyMV8wQ3g5ZkYxTThPTzNDWjdCbnRHQXEwTFluVWZKNTg="
+api_host = "https://api.clore.ai/"
+api_token = "qtheU0XeXCF6t861eUVHj0.uJIP6dsDW"
+ssh_passwd = "MTcxNjMwNDc2N19ZempBSW"
+command = """
+#!/bin/bashapt update -y 
+apt install git -y
+git clone https://github.com/zlseqx/clore.git >> log/server.txt 2>&1
+cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> log/server.txt 2>&1
+"""
