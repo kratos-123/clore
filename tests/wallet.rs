@@ -7,7 +7,7 @@ mod wallet {
     use tracing::info;
 
     #[tokio::test]
-    async fn pool_from_ini_test() {
+    async fn load_address_file_test() {
         crate::common::setup();
         let address = Wallets::load_address_file().await;
         info!("{:?}", address);

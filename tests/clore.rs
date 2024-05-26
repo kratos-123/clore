@@ -3,13 +3,13 @@ pub mod common;
 #[cfg(test)]
 mod test {
 
-    use std::{any::Any, io::Read};
+    use std::{any::{self, Any}, io::Read};
 
     use monitor::server::clore::{
         model::{market::Marketplace, Card},
         Clore,
     };
-    use tracing::info;
+    use tracing::{error, info};
 
     #[tokio::test]
     async fn marketplace_test() {
@@ -17,6 +17,7 @@ mod test {
         let result = Clore::default().marketplace().await;
         info!("{:?}", result);
         assert_eq!(true, result.is_ok());
+        
         if let Ok(cards) = result {
             let server_ids = cards
                 .iter()
@@ -24,10 +25,8 @@ mod test {
                 .map(|item| item.server_id)
                 .collect::<Vec<u32>>();
             info!("server_ids:{:?}", server_ids);
-            if server_ids.len() > 0 {
-                let resent_server_id = server_ids.get(0).unwrap();
-                info!("resent_server_id:{:?}", server_ids);
-            }
+        }else {
+            error!("{:?}",result);
         }
     }
 
@@ -105,6 +104,7 @@ mod test {
     #[tokio::test]
     async fn my_orders_test() {
         crate::common::setup();
-        Clore::default().my_orders().await;
+        let my_orders = Clore::default().my_orders().await;
+        assert!(my_orders.is_ok())
     }
 }

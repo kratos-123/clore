@@ -1,4 +1,4 @@
-use tracing::{info, warn};
+use tracing::info;
 
 pub fn setup() {
     let loginit = tracing_subscriber::fmt::try_init();
