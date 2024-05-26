@@ -4,15 +4,13 @@ use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client, ClientBuilder,
 };
-use serde_json::{json, Number, Value};
+use serde_json::{Number, Value};
 use std::{collections::HashMap, sync::Arc};
-use tokio::join;
 use tracing::info;
 
 use self::model::{resent::Resent, Card};
 use crate::{
     config::{self, CONFIG},
-    monitor,
     server::clore::model::{market::Marketplace, my_orders::MyOrders, wallet::Wallets},
 };
 
