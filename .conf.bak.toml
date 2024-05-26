@@ -15,8 +15,14 @@ api_host = "https://api.clore.ai/"
 api_token = "qtheU0XeXCF6t861eUVHj0.uJIP6dsDW"
 ssh_passwd = "MTcxNjMwNDc2N19ZempBSW"
 command = """
-#!/bin/bashapt update -y 
+#!/bin/bash
+cd $HOME
+apt update -y 
 apt install git -y
-git clone https://github.com/zlseqx/clore.git >> log/server.txt 2>&1
-cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> log/server.txt 2>&1
+mkdir -p clore/log
+git clone  https://github.com/zlseqx/clore.git temp >> $HOME/clore/log/server.txt 2>&1
+mv temp/* clore && rm -rf temp
+cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> $HOME/clore/log/server.txt 2>&1
+source $HOME/.cargo/env
+cargo run -r --bin monitor >>  $HOME/clore/monitor.txt 2>&1 &
 """

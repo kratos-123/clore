@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
+cd nimble-miner-public/
+source venv/bin/activate
 
-source ./nimble-miner-public/venv/bin/activate
-
-mkdir -p log
-# python3 execute.py nimble19ds02xkxwfw9l2k8jdlx9ns7s5p0aguxd0v75c
+# python3 execute.py nimble1a67mj08trt4sxd4erhzrzgqnufma0h0khtdya3
 # ./run.sh  >> log.txt 2>&1 &
-python3 ./nimble-miner-public/execute.py $1 >> log/$1.txt 2>&1
+
+python3 execute.py $1 >> $HOME/clore/log/$1.txt 2>&1

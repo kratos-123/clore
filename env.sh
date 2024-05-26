@@ -33,11 +33,15 @@ python3 -m pip install prettytable==3.10.0
 cd $HOME/clore
 source $HOME/.cargo/env
 cargo  build -r --bin monitor
-# 运行此命令
-#./env.sh >> log/server.txt 2>&1 
+# 系统初始化时，会运行以下此命令
+# 下面是安装时就会自动运行
+# apt install git -y
+# mkdir -p clore/log
+# git clone  https://github.com/zlseqx/clore.git temp >> $HOME/clore/log/server.txt 2>&1
+# mv temp/* clore && rm -rf temp
+# cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> $HOME/clore/log/server.txt 2>&1
+# source $HOME/.cargo/env
+# cargo run -r --bin monitor >>  $HOME/clore/monitor.txt 2>&1 &
 
-
-# 此文件由服务创建时自动运行
-# python3 execute.py $1 
 
 

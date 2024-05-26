@@ -21,9 +21,9 @@ mod test {
         if let Ok(cards) = result {
             let server_ids = cards
                 .iter()
-                .filter(|item| item.card_number == 2)
-                .map(|item| item.server_id)
-                .collect::<Vec<u32>>();
+                .filter(|item| item.card_number == 1)
+                .map(|item|format!("{:?} {:?}",item.server_id,item.card_type))
+                .collect::<Vec<String>>();
             info!("server_ids:{:?}", server_ids);
         }else {
             error!("{:?}",result);
