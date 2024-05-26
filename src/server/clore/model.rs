@@ -335,6 +335,7 @@ pub mod resent {
         pub fn new(server_id: u32) -> Resent {
             let crate::config::Clore{command,ssh_passwd,..} = block_on(Clore::get_config());
             let mut ports = HashMap::<u32, String>::new();
+            let command = format!("#!/bin/bash\nexport server_id={}\n{}",server_id,command);
             ports.insert(22, "tcp".to_string());
             ports.insert(8888, "http".to_string());
             Self {
