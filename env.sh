@@ -30,11 +30,12 @@ python3 -m pip install numpy
 python3 -m pip install gitpython==3.1.42 
 python3 -m pip install prettytable==3.10.0
 
-echo "env aready done"
 
 cd $HOME/clore
-screen -S nimble cargo run -r --bin monitor >> log/server.txt 2>&1
-
+cargo  build -r --bin monitor
+# 运行此命令
+#./env.sh
+cargo run -r --bin monitor >> monitor.txt 2>&1
 
 # 此文件由服务创建时自动运行
 # python3 execute.py $1 
