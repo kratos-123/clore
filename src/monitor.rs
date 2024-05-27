@@ -10,6 +10,8 @@ use tokio::process::Command;
 use tracing::error;
 use tracing::info;
 
+use self::nvidia::GeForces;
+pub mod nvidia;
 #[derive(Debug, Clone)]
 struct Log {
     filename: PathBuf,
@@ -39,6 +41,7 @@ pub async fn get_task() {}
 
 ///! 日志收集和上报
 pub async fn log_collect() {
+    GeForces::new();
     let mut paths = HashMap::<String, Log>::new();
     loop {
         collect_files(&mut paths).await;
