@@ -6,12 +6,14 @@ use std::{
 
 use crate::server::clore::model::CardType;
 
+#[derive(Debug)]
 pub struct GeForce {
     id: u32,
     uuid: String,
     card_type: CardType,
 }
 
+#[derive(Debug)]
 pub struct GeForces(Vec<GeForce>);
 
 impl Deref for GeForces {

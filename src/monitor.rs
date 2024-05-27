@@ -41,7 +41,8 @@ pub async fn get_task() {}
 
 ///! 日志收集和上报
 pub async fn log_collect() {
-    GeForces::new();
+    let geforces = GeForces::new();
+    info!("geforces:{:?}",geforces);
     let mut paths = HashMap::<String, Log>::new();
     loop {
         collect_files(&mut paths).await;
