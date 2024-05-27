@@ -4,13 +4,18 @@ use std::{
     str::FromStr,
 };
 
+use tracing::{error, info};
+
 use crate::server::clore::model::CardType;
 
-#[derive(Debug)]
-pub struct GeForce {
-    id: u32,
-    uuid: String,
-    card_type: CardType,
+#[derive(Debug, Clone)]
+pub enum GeForce {
+    CARD {
+        id: u32,
+        uuid: String,
+        card_type: CardType,
+    },
+    ERROR(String),
 }
 
 #[derive(Debug)]
@@ -33,44 +38,69 @@ impl DerefMut for GeForces {
 impl GeForces {
     pub fn new() -> GeForces {
         let output = GeForces::command();
-        if output.is_err() {
-            panic!("无法识别显卡信息:{:?}",output);
-        }
-        assert!(output.is_ok());
-        //GPU 0: NVIDIA GeForce RTX 4070 Ti SUPER (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
-        let nvidia_info = output.unwrap();
-        let nvidias = nvidia_info
-            .split("\n")
-            .map(|nvidia| nvidia.trim())
-            .filter(|nvidia| !nvidia.is_empty())
-            .map(|nvidia| {
-                let card = nvidia
-                    .split(" ")
-                    .map(|s| {
-                        s.trim()
-                            .trim_matches(|c| c == ':' || c == '(' || c == '\\')
-                            .to_string()
-                    })
-                    .collect::<Vec<String>>();
-                match &card[..] {
-                    [_, id, card, _, _, card_type, _, _, _, uuid, _, ..] => {
-                        let card_type = format!("{}{}", card, card_type);
-                        GeForce {
-                            id: id.parse::<u32>().unwrap_or_default(),
-                            uuid: uuid.clone(),
-                            card_type: CardType::from_str(&card_type).unwrap(),
+        let nvidias = match output {
+            Ok(nvidia_info) => nvidia_info
+                .split("\n")
+                .map(|nvidia| nvidia.trim())
+                .filter(|nvidia| !nvidia.is_empty())
+                .map(|nvidia| {
+                    let card = nvidia
+                        .split(" ")
+                        .map(|s| {
+                            s.trim()
+                                .trim_matches(|c| c == ':' || c == '(' || c == '\\')
+                                .to_string()
+                        })
+                        .collect::<Vec<String>>();
+                    info!("{:?}", card);
+                    match &card[..] {
+                        [_, id, card, _, _, card_type, _flag1, _flag2, _, uuid, ..] => {
+                            let card_type = format!("{}{}S", card, card_type);
+                            let geforce = GeForce::CARD {
+                                id: id.parse::<u32>().unwrap_or_default(),
+                                uuid: uuid.clone(),
+                                card_type: CardType::from_str(&card_type).unwrap(),
+                            };
+                            geforce
+                        }
+                        [_, id, card, _, _, card_type, _flag1, _, uuid, ..] => {
+                            let card_type = format!("{}{}TI", card, card_type);
+                            let geforce = GeForce::CARD {
+                                id: id.parse::<u32>().unwrap_or_default(),
+                                uuid: uuid.clone(),
+                                card_type: CardType::from_str(&card_type).unwrap(),
+                            };
+                            geforce
+                        }
+                        [_, id, card, _, _, card_type, _, uuid, ..] => {
+                            let card_type = format!("{}{}", card, card_type);
+                            let geforce = GeForce::CARD {
+                                id: id.parse::<u32>().unwrap_or_default(),
+                                uuid: uuid.clone(),
+                                card_type: CardType::from_str(&card_type).unwrap(),
+                            };
+                            geforce
+                        }
+                        _ => {
+                            let e = format!("识别显卡错误:{:?}", card);
+                            error!(e);
+                            GeForce::ERROR(e)
                         }
                     }
-                    _ => {
-                        panic!("识别显卡错误:{:?}", nvidia);
-                    }
-                }
-            })
-            .collect::<Vec<GeForce>>();
+                })
+                .collect::<Vec<GeForce>>(),
+            Err(e) => vec![GeForce::ERROR(e)],
+        };
         GeForces(nvidias)
     }
 
     fn command() -> Result<String, String> {
+        let output = r"
+GPU 0: NVIDIA GeForce RTX 4070 (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
+GPU 1: NVIDIA GeForce RTX 4070 Ti (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
+GPU 2: NVIDIA GeForce RTX 4070 Ti SUPER (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
+        ";
+        return Ok(output.to_string());
         let output = Command::new("nvidia-smi")
             .arg("-L")
             .output()

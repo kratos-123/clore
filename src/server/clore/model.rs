@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
 
 #[repr(u8)]
-#[derive(Debug, PartialEq, EnumString, Display, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, EnumString, Display, Eq, PartialOrd, Ord, Clone)]
 pub enum CardType {
     NVIDIA4090 = 1,
     NVIDIA4080S = 2,

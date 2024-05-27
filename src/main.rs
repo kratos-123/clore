@@ -1,10 +1,10 @@
-use monitor::monitor::log_collect;
+use monitor::monitor::monitor;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt::init();
     zipscreen();
-    log_collect().await;
+    monitor().await;
     Ok(())
 }
 
