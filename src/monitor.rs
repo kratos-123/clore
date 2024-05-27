@@ -1,7 +1,9 @@
 use lazy_static::lazy_static;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
+use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
 use tracing::info;
 
@@ -14,7 +16,11 @@ pub mod nvidia;
 
 lazy_static! {
     pub static ref MONITOR: Arc<Mutex<Monitor>> = { Arc::new(Mutex::new(Monitor::new())) };
+    pub static ref LOG: Arc<Mutex<(UnboundedSender<String>, UnboundedReceiver<String>)>> =
+        { Arc::new(Mutex::new(unbounded_channel::<String>())) };
 }
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Monitor {
     server_id: Option<u32>,
     nvidias: GeForces,
@@ -41,17 +47,15 @@ impl Monitor {
     }
 
     pub async fn check(&mut self) {
-        
         self.logs.iter_log_files().await;
 
-        for log  in self.logs.iter_mut() {
-            info!("{:?}",log);
+        for log in self.logs.iter_mut() {
             if !log.spawn {
                 log.spawn = true;
                 tokio::spawn(read_log_file(log.clone()));
             }
-            
-            info!("{:?}",log);
+
+            // info!("{:?}",log);
         }
     }
 
@@ -92,9 +96,25 @@ impl Monitor {
 pub async fn monitor() {
     loop {
         let monitor = Arc::clone(&MONITOR);
-        let mut locked = monitor.lock().await;
-        (*locked).check().await;
+        let mut monitor_locked = monitor.lock().await;
 
-        drop(locked);
+        let reader = Arc::clone(&LOG);
+        let mut reader_locked = reader.lock().await;
+
+        tokio::select! {
+            result = (*monitor_locked).check() => {
+                // info!("{:?}",result);
+                drop(monitor_locked);
+            },
+            Some(msg) =  (*reader_locked).1.recv() => {
+                for msg in msg.split("\n") {
+                    info!("{:?}",msg);
+                }
+               
+                drop(reader_locked);
+            }
+        }
+
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
     }
 }

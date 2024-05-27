@@ -4,11 +4,12 @@ use std::{
     str::FromStr,
 };
 
+use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
 use crate::server::clore::model::CardType;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GeForce {
     CARD {
         id: u32,
@@ -18,7 +19,7 @@ pub enum GeForce {
     ERROR(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GeForces(Vec<GeForce>);
 
 impl Deref for GeForces {
