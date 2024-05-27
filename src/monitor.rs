@@ -35,6 +35,10 @@ pub async fn mining(address: &str) -> Result<bool, String> {
     }
 }
 
+pub async fn get_task() {
+    
+}
+
 ///! 日志收集和上报
 pub async fn log_collect() {
     let mut paths = HashMap::<String, Log>::new();

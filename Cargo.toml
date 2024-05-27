@@ -20,3 +20,4 @@ chrono = {version = "0.4.38",features = ["serde"]}
 indexmap = "2.2.6"
 toml = "0.8.13"
 futures = "0.3.30"
+nvml-wrapper = "0.10.0"

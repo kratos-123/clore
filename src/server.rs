@@ -5,7 +5,7 @@ use tracing::{info, warn};
 pub mod clore;
 pub mod wallet;
 
-#[get("/distribute_address")]
+#[get("/distribute_address/{card_number}/{server_id}")]
 pub async fn distribute_address() -> String {
     unimplemented!()
 }
