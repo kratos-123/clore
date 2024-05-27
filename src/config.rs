@@ -39,7 +39,7 @@ pub struct Clore {
     pub api_host: String,
     pub api_token: String,
     pub ssh_passwd: String,
-    pub command:String,
+    pub command: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
