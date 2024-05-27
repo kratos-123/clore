@@ -3,7 +3,10 @@ pub mod common;
 #[cfg(test)]
 mod test {
 
-    use std::{any::{self, Any}, io::Read};
+    use std::{
+        any::{self, Any},
+        io::Read,
+    };
 
     use monitor::server::clore::{
         model::{market::Marketplace, Card},
@@ -17,16 +20,16 @@ mod test {
         let result = Clore::default().marketplace().await;
         info!("{:?}", result);
         assert_eq!(true, result.is_ok());
-        
+
         if let Ok(cards) = result {
             let server_ids = cards
                 .iter()
                 .filter(|item| item.card_number == 1)
-                .map(|item|format!("{:?} {:?}",item.server_id,item.card_type))
+                .map(|item| format!("{:?} {:?}", item.server_id, item.card_type))
                 .collect::<Vec<String>>();
             info!("server_ids:{:?}", server_ids);
-        }else {
-            error!("{:?}",result);
+        } else {
+            error!("{:?}", result);
         }
     }
 
