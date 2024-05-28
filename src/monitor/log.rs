@@ -196,7 +196,7 @@ pub async fn read_log_file(log: Log) {
                         }else {
                             info!("监听系统自带运行日志，成功上传");
                         }
-                        reader.seek(SeekFrom::Start(0)).await;
+                        let _ = reader.seek(SeekFrom::Start(0)).await;
                         drop(reader_chan_locked);
                     }
                     tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;

@@ -100,6 +100,7 @@ impl GeForces {
 GPU 0: NVIDIA GeForce RTX 4070 (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
 GPU 1: NVIDIA GeForce RTX 4070 Ti (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
 GPU 2: NVIDIA GeForce RTX 4070 Ti SUPER (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
+GPU 4: NVIDIA GeForce RTX 4090 (UUID: GPU-13d44c72-a798-c126-54cb-98e543beadd3)
         ";
         return Ok(output.to_string());
         let output = Command::new("nvidia-smi")
