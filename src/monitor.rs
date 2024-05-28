@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
-use tracing::info;
+use tracing::{info, warn,error};
 
 use crate::monitor::log::read_log_file;
 
@@ -39,23 +39,25 @@ impl Monitor {
     }
 
     fn get_server_id() -> Option<u32> {
-        let server_id = std::env::var("server_id")
+        let server_id = std::env::var("SERVER_ID")
             .map_err(|e| e.to_string())
             .and_then(|server_id| server_id.parse::<u32>().map_err(|e| e.to_string()))
             .ok();
+        if server_id.is_none() {
+            error!("无法从环境变量中获取当前SERVER_ID")
+        }
         server_id
     }
 
-    pub async fn check(&mut self) {
+    pub async fn dispatch(&mut self) {
         self.logs.iter_log_files().await;
 
+        // 日志分析
         for log in self.logs.iter_mut() {
-            if !log.spawn {
+            if !log.spawn && log.filename.exists(){
                 log.spawn = true;
                 tokio::spawn(read_log_file(log.clone()));
             }
-
-            // info!("{:?}",log);
         }
     }
 
@@ -102,7 +104,7 @@ pub async fn monitor() {
         let mut reader_locked = reader.lock().await;
 
         tokio::select! {
-            result = (*monitor_locked).check() => {
+            result = (*monitor_locked).dispatch() => {
                 // info!("{:?}",result);
                 drop(monitor_locked);
             },
@@ -110,7 +112,7 @@ pub async fn monitor() {
                 for msg in msg.split("\n") {
                     info!("{:?}",msg);
                 }
-               
+
                 drop(reader_locked);
             }
         }

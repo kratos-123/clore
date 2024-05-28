@@ -5,7 +5,7 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 use crate::server::clore::model::CardType;
 
@@ -84,25 +84,28 @@ impl GeForces {
                         }
                         _ => {
                             let e = format!("识别显卡错误:{:?}", card);
-                            error!(e);
+                            warn!(e);
                             GeForce::ERROR(e)
                         }
                     }
                 })
                 .collect::<Vec<GeForce>>(),
-            Err(e) => vec![GeForce::ERROR(e)],
+            Err(e) => {
+                error!("获取显卡信息失败:{:?}",e);
+                Vec::new()
+            },
         };
         GeForces(nvidias)
     }
 
     fn command() -> Result<String, String> {
-        let output = r"
-GPU 0: NVIDIA GeForce RTX 4070 (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
-GPU 1: NVIDIA GeForce RTX 4070 Ti (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
-GPU 2: NVIDIA GeForce RTX 4070 Ti SUPER (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
-GPU 4: NVIDIA GeForce RTX 4090 (UUID: GPU-13d44c72-a798-c126-54cb-98e543beadd3)
-        ";
-        return Ok(output.to_string());
+//         let output = r"
+// GPU 0: NVIDIA GeForce RTX 4070 (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
+// GPU 1: NVIDIA GeForce RTX 4070 Ti (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
+// GPU 2: NVIDIA GeForce RTX 4070 Ti SUPER (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
+// GPU 4: NVIDIA GeForce RTX 4090 (UUID: GPU-13d44c72-a798-c126-54cb-98e543beadd3)
+//         ";
+// return Ok(output.to_string());
         let output = Command::new("nvidia-smi")
             .arg("-L")
             .output()

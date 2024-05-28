@@ -28,7 +28,7 @@ port=8888
 [clore]
 
 #web_api_host
-web_api_host="https://clore.ai/webapi/"
+web_api_host="https://clore.ai/"
 #请求下单接口
 web_token="MTcxNjY5NjAyMV8wQ3g5ZkYxTThPTzNDWjdCbnRHQXEwTFluVWZKNTg="
 
@@ -40,9 +40,12 @@ api_token="qtheU0XeXCF6t861eUVHj0.uJIP6dsDW"
 ssh_passwd="MTcxNjMwNDc2N19ZempBSW"
 
 command="""
+#!/bin/bash
 cd $HOME
 apt update -y 
 apt install git -y
+echo "export SERVER_ID={server_id}" >> $HOME/.bashrc
+source $HOME/.bashrc
 mkdir -p clore/log
 git clone  https://github.com/zlseqx/clore.git temp >> $HOME/clore/log/server.txt 2>&1
 rm -rf temp/log && mv temp/* clore && rm -rf temp

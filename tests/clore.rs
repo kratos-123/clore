@@ -105,9 +105,28 @@ mod test {
     }
 
     #[tokio::test]
+    async fn create_order_web_api_test() {
+        crate::common::setup();
+        panic!("请更改id测试！！");
+        Clore::create_order_web_api(77777).await;
+    }
+
+    #[tokio::test]
     async fn my_orders_test() {
         crate::common::setup();
         let my_orders = Clore::default().my_orders().await;
         assert!(my_orders.is_ok())
+    }
+
+    #[test]
+    fn import_block_server_ids_test() {
+        crate::common::setup();
+        Clore::import_block_server_ids();
+    }
+
+    #[test]
+    fn append_block_server_id_test() {
+        crate::common::setup();
+        Clore::append_block_server_id(77777);
     }
 }

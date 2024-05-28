@@ -74,7 +74,7 @@ impl ToString for Currency {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Card {
     pub server_id: u32,
     pub avg_score: f64,
@@ -311,12 +311,8 @@ pub mod wallet {
 }
 
 pub mod resent {
-    use std::collections::HashMap;
-
-    use futures::executor::block_on;
     use serde::{Deserialize, Serialize};
-
-    use crate::server::clore::Clore;
+    use std::collections::HashMap;
 
     use super::Currency;
 
@@ -327,23 +323,18 @@ pub mod resent {
         renting_server: u32,
         #[serde(rename(serialize = "type"))]
         demand: String,
-        ports: HashMap<u32, String>,
+        ports: HashMap<String, String>,
         env: HashMap<String, String>,
         ssh_password: String,
         command: String,
     }
 
     impl Resent {
-        pub fn new(server_id: u32) -> Resent {
-            let crate::config::Clore {
-                command,
-                ssh_passwd,
-                ..
-            } = block_on(Clore::get_config());
-            let mut ports = HashMap::<u32, String>::new();
-            let command = format!("#!/bin/bash\nexport server_id={}\n{}", server_id, command);
-            ports.insert(22, "tcp".to_string());
-            ports.insert(8888, "http".to_string());
+        pub fn new(server_id: u32, ssh_passwd: String, command: String) -> Resent {
+            let mut ports = HashMap::<String, String>::new();
+
+            ports.insert("22".to_string(), "tcp".to_string());
+            ports.insert("8888".to_string(), "http".to_string());
             Self {
                 currency: Currency::CLORE,
                 image: "cloreai/torch:2.0.1".to_string(),
@@ -360,6 +351,51 @@ pub mod resent {
     impl ToString for Resent {
         fn to_string(&self) -> String {
             serde_json::to_string(&self).unwrap_or_default()
+        }
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct ResentWeb {
+        currency: Currency,
+        image: String,
+        dockerhub_auth: String,
+        ports: HashMap<String, String>,
+        env: HashMap<String, String>,
+        #[serde(rename(serialize = "type"))]
+        demand: String,
+        renting_server: u32,
+        remember_password: bool,
+        token: String,
+        command: String,
+    }
+
+    impl ResentWeb {
+        pub fn new(
+            server_id: u32,
+            ssh_passwd: String,
+            web_token: String,
+            command: String,
+        ) -> ResentWeb {
+            let mut envs = HashMap::<String, String>::new();
+            // {"WEBUI_PASSWORD":"MTcxNjMwNDc2N19ZempBSW","SSH_PASSWORD":"MTcxNjMwNDc2N19ZempBSW"}
+            envs.insert("WEBUI_PASSWORD".to_string(), ssh_passwd.clone());
+            envs.insert("SSH_PASSWORD".to_string(), ssh_passwd.clone());
+            let mut ports = HashMap::<String, String>::new();
+
+            ports.insert("22".to_string(), "tcp".to_string());
+            ports.insert("8888".to_string(), "http".to_string());
+            ResentWeb {
+                currency: Currency::CLORE,
+                image: "cloreai/torch:2.0.1".to_string(),
+                dockerhub_auth: "".to_string(),
+                ports,
+                env: envs,
+                demand: "on-demand".to_string(),
+                renting_server: server_id,
+                remember_password: true,
+                token: web_token.to_string(),
+                command,
+            }
         }
     }
 }
