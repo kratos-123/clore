@@ -145,7 +145,7 @@ impl Clore {
                 .map(|e| e.to_string())
                 .unwrap_or("failed".to_string())
         })?;
-        if status == "completed".to_string() {
+        if status != "completed".to_string() {
             info!("下单成功！");
             Ok(())
         } else {
