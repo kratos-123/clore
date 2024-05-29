@@ -3,6 +3,7 @@ use tracing::error;
 use tracing::{info, warn};
 
 pub mod clore;
+pub mod ssh;
 pub mod wallet;
 
 #[get("/distribute_address/{card_number}/{server_id}")]

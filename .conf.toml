@@ -8,6 +8,8 @@ address = [
     "nimble1a67mj08trt4sxd4erhzrzgqnufma0h0khtdya3",
     "nimble1mq32psph2c9yqc2j2k8lr67zg50kjkef02tcuu",
     "nimble1fg04yu5pk0yqvvm6jq8gtg8qa8we3wf24q34t8",
+    "nimble1lk30akmnnr6zpfarm2vvg9l3q0rakagqyhh5ap",
+    "nimble1t4na8cxqd46cqd7jdrenp2fxrynf02d6jcsnm0",
 
     #主地址 victor
     "nimble1ae4h5l0aryhu9jgdrr5srvw98pn5jmn2jnfndk",
@@ -35,7 +37,7 @@ web_token="MTcxNjY1NDA2N19XeElVS0dJR2dpMGF4cDJzbmtOeDNWOUVyczg3amQ="
 #api请求地址
 api_host="https://api.clore.ai/"
 #api数据接口token
-api_token="qtheU0XeXCF6t861eUVHj0.uJIP6dsDW"
+api_token="v76Zfp8zmmVj-KsI7mr-kv6irmS1UC8L"
 #远程连接密码
 ssh_passwd="MTcxNjMwNDc2N19ZempBSW"
 
@@ -60,7 +62,7 @@ source $HOME/.bashrc
 # 激活pm2环境,用pm2管理cargo 监控进程
 conda init
 conda activate nimble
-pm2 start "cargo run -r --bin monitor" --name monitor --logs $HOME/clore/monitor.txt
+pm2 start "cargo run -r --bin monitor" --name monitor --log $HOME/clore/monitor.txt
 """
 
 

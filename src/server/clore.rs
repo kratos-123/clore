@@ -150,7 +150,7 @@ impl Clore {
         }
     }
 
-    pub async fn my_orders(&self) -> Result<(), String> {
+    pub async fn my_orders(&self) -> Result<MyOrders, String> {
         let config::Clore { api_host, .. } = Clore::get_config().await;
         let url = format!("{}{}", api_host, "v1/my_orders");
         let text = Clore::get_client()
@@ -163,9 +163,10 @@ impl Clore {
             .await
             .map_err(|e| e.to_string())?;
         info!("my_order_text:{:?}", text);
-        let result = serde_json::from_str::<MyOrders>(&text).map_err(|e| e.to_string());
+        let result: Result<MyOrders, String> =
+            serde_json::from_str::<MyOrders>(&text).map_err(|e| e.to_string());
         info!("获取到订单号:{:?}", result);
-        Ok(())
+        result
     }
 
     pub async fn cancel_order(&self, order_id: u32) -> Result<(), String> {

@@ -155,9 +155,11 @@ pub mod market {
                     let machine_properties = &item.specs;
                     let gpu = &machine_properties.gpu;
                     regex.is_match(&gpu)
-                        && item.rating.get("avg").unwrap_or(&0f32) > &4.5f32
+                        && item.rating.get("avg").unwrap_or(&0f32) > &3.5f32
                         && item.allowed_coins.contains(&"CLORE-Blockchain".to_string())
                         && !item.rented
+                        && item.mrl > 72
+                        && item.specs.net.down > 20f64
                 })
                 .map(|item| {
                     let card_info = item
@@ -408,12 +410,48 @@ pub mod my_orders {
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Order {
         #[serde(alias = "id")]
-        order_id: i32,
+        pub order_id: i32,
         #[serde(alias = "si")]
-        server_id: i32,
-        pub_cluster: Vec<String>,
-        tcp_ports: Vec<String>,
-        http_port: String,
+        pub server_id: i32,
+        pub pub_cluster: Vec<String>,
+        pub tcp_ports: Vec<String>,
+        pub http_port: String,
+    }
+
+    impl Order {
+        pub fn get_map_ssh_port(&self) -> Option<u16> {
+            let mut ssh_map_port = None;
+            for map in self.tcp_ports.iter() {
+                let port_maps = map
+                    .split(":")
+                    .map(|e| e.parse::<u16>().unwrap_or_default())
+                    .collect::<Vec<u16>>();
+                match port_maps[..] {
+                    [origin, map] if origin == 22 => {
+                        ssh_map_port = Some(map);
+                    }
+                    _ => {
+                        ssh_map_port = None;
+                    }
+                };
+                if ssh_map_port.is_some() {
+                    break;
+                }
+            }
+
+            ssh_map_port
+        }
+
+        pub fn get_ssh_host(&self) -> Option<String> {
+            let index = self.pub_cluster.len();
+            if index > 0 {
+                self.pub_cluster
+                    .get(index - 1)
+                    .and_then::<String, _>(|host| Some(host.clone()))
+            } else {
+                None
+            }
+        }
     }
 
     #[derive(Serialize, Deserialize, Debug)]

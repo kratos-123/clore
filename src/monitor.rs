@@ -15,9 +15,9 @@ pub mod log;
 pub mod nvidia;
 pub mod process;
 lazy_static! {
-    pub static ref MONITOR: Arc<Mutex<Monitor>> = { Arc::new(Mutex::new(Monitor::new())) };
+    pub static ref MONITOR: Arc<Mutex<Monitor>> = Arc::new(Mutex::new(Monitor::new()));
     pub static ref LOG: Arc<Mutex<(UnboundedSender<String>, UnboundedReceiver<String>)>> =
-        { Arc::new(Mutex::new(unbounded_channel::<String>())) };
+        Arc::new(Mutex::new(unbounded_channel::<String>()));
 }
 
 #[derive(Debug, Serialize, Deserialize)]

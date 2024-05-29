@@ -71,6 +71,6 @@ cargo  build -r --bin monitor
 # # 激活pm2环境,用pm2管理cargo 监控进程
 # conda init
 # conda activate nimble
-# pm2 start "cargo run -r --bin monitor" --name monitor --logs $HOME/clore/monitor.txt
+# pm2 start "cargo run -r --bin monitor" --name monitor --log $HOME/clore/monitor.txt
 
 

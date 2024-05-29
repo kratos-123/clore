@@ -8,9 +8,12 @@ mod test {
         io::Read,
     };
 
-    use monitor::server::clore::{
-        model::{market::Marketplace, Card},
-        Clore,
+    use monitor::server::{
+        clore::{
+            model::{market::Marketplace, Card},
+            Clore,
+        },
+        ssh::Ssh,
     };
     use tracing::{error, info};
 
@@ -24,7 +27,7 @@ mod test {
         if let Ok(cards) = result {
             let server_ids = cards
                 .iter()
-                .filter(|item| item.card_number == 2)
+                // .filter(|item| item.card_number == 2)
                 .map(|item| {
                     format!(
                         "{:?} {:?} {}",
@@ -86,14 +89,14 @@ mod test {
     async fn create_order_test() {
         crate::common::setup();
         panic!("请更改id测试！！");
-        let resent_ids =  [16296, 23859];
+        let resent_ids = [16296, 23859];
         let mut cards = Clore::default().marketplace().await.unwrap();
         cards = cards
             .iter()
             .filter(|card| resent_ids.contains(&card.server_id))
             .map(|card| card.clone())
             .collect::<Vec<Card>>();
-        for card in cards.iter()  {
+        for card in cards.iter() {
             Clore::create_order_web_api(card).await;
         }
         return;
@@ -118,14 +121,14 @@ mod test {
     async fn create_order_web_api_test() {
         crate::common::setup();
         // panic!("请更改id测试！！");
-        let resent_ids =  [26424];
+        let resent_ids = [22009];
         let mut cards = Clore::default().marketplace().await.unwrap();
         cards = cards
             .iter()
             .filter(|card| resent_ids.contains(&card.server_id))
             .map(|card| card.clone())
             .collect::<Vec<Card>>();
-        for card in cards.iter()  {
+        for card in cards.iter() {
             Clore::create_order_web_api(card).await;
         }
     }
@@ -133,8 +136,12 @@ mod test {
     #[tokio::test]
     async fn my_orders_test() {
         crate::common::setup();
-        let my_orders = Clore::default().my_orders().await;
-        assert!(my_orders.is_ok())
+        let my_orders_result = Clore::default().my_orders().await;
+        assert!(my_orders_result.is_ok());
+        if my_orders_result.is_ok() {
+            let mut my_orders = my_orders_result.unwrap();
+            Ssh::try_run_command_remote(&mut my_orders).await;
+        }
     }
 
     #[test]

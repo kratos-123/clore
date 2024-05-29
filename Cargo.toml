@@ -22,3 +22,5 @@ toml = "0.8.13"
 futures = "0.3.30"
 nvml-wrapper = "0.10.0"
 time = {version = "0.3.36",features = ["macros"]}
+ssh2 = "0.9.4"
+hickory-resolver = {version = "0.24.1",features = ["tokio-runtime"]}
