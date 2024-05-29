@@ -13,6 +13,14 @@ if [ ! -d ~/miniconda3 ];then
 fi
 
 source $HOME/.bashrc
+case ":${PATH}:" in
+    *:"$HOME/miniconda3/bin":*)
+        ;;
+    *)
+    export PATH="$HOME/miniconda3/bin:$PATH"
+    ;;
+esac
+
 conda init
 nimble=`conda info -e | grep nimble`;
 if [[ "$nimble" == "" ]];then
