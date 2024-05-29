@@ -14,21 +14,23 @@ fi
 source $HOME/.cargo/env
 source $HOME/.bashrc
 
-cd
+# ./env.sh: line 25: conda: command not found
+# ./env.sh: line 29: conda: command not found
+# ./env.sh: line 38: ./nimenv_localminers/bin/activate: No such file or directory
 if [ ! -d ~/miniconda3 ];then
     mkdir -p ~/miniconda3
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
     bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
     rm -rf ~/miniconda3/miniconda.sh
     ~/miniconda3/bin/conda init bash
-    source $HOME/.bashrc
-    conda create -n nimble python=3.11 -y
 fi
+source $HOME/.bashrc
 
+conda create -n nimble python=3.11 -y
 
 conda activate nimble
 
-if [ -d nimble-miner-public ];then
+if [ ! -d nimble-miner-public ];then
     git clone https://github.com/nimble-technology/nimble-miner-public.git
     cd nimble-miner-public
     sed  sed -ir 's/numpy==1.26.4/numpy==1.24.4/' requirements.txt
