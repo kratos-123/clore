@@ -24,8 +24,13 @@ mod test {
         if let Ok(cards) = result {
             let server_ids = cards
                 .iter()
-                .filter(|item| item.card_number == 1)
-                .map(|item| format!("{:?} {:?}", item.server_id, item.card_type))
+                // .filter(|item| item.card_number == 2)
+                .map(|item| {
+                    format!(
+                        "{:?} {:?} {}",
+                        item.server_id, item.card_type, item.card_number
+                    )
+                })
                 .collect::<Vec<String>>();
             info!("server_ids:{:?}", server_ids);
         } else {
@@ -60,19 +65,17 @@ mod test {
         let result = serde_json::from_str::<Marketplace>(&row);
         assert_eq!(true, result.is_ok());
         let model = result.unwrap();
-        let cards: Vec<Card> = model.filter();
-        let server_ids = cards
-            .iter()
+        let mut cards: Vec<Card> = model.filter();
+        cards = cards
+            .into_iter()
             .filter(|item| item.card_number == 2)
-            .map(|item| item.server_id)
-            .collect::<Vec<u32>>();
-        info!("server_ids:{:?}", server_ids);
-        if server_ids.len() > 0 {
-            let resent_server_id = server_ids.get(0).unwrap();
+            .map(|item| item)
+            .collect::<Vec<Card>>();
+        info!("server_ids:{:?}", cards);
+        if cards.len() > 0 {
+            let resent_server_id = cards.get(0).unwrap();
             info!("resent_server_id:{:?}", resent_server_id);
-            let result = Clore::default()
-                .create_order(resent_server_id.clone())
-                .await;
+            let result = Clore::default().create_order(&resent_server_id).await;
             assert_eq!(true, result.is_ok())
         }
 
@@ -82,22 +85,29 @@ mod test {
     #[tokio::test]
     async fn create_order_test() {
         crate::common::setup();
-        let result = Clore::default().create_order(77777).await;
+        panic!("请更改id测试！！");
+        let resent_ids =  [16296, 23859];
+        let mut cards = Clore::default().marketplace().await.unwrap();
+        cards = cards
+            .iter()
+            .filter(|card| resent_ids.contains(&card.server_id))
+            .map(|card| card.clone())
+            .collect::<Vec<Card>>();
+        for card in cards.iter()  {
+            Clore::create_order_web_api(card).await;
+        }
         return;
         let market = Clore::default().marketplace().await;
         if let Ok(cards) = market {
-            let server_ids = cards
-                .iter()
+            let cards = cards
+                .into_iter()
                 .filter(|item| item.card_number == 2)
-                .map(|item| item.server_id)
-                .collect::<Vec<u32>>();
-            info!("server_ids:{:?}", server_ids);
-            if server_ids.len() > 0 {
-                let resent_server_id = server_ids.get(0).unwrap();
-                info!("resent_server_id:{:?}", resent_server_id);
-                let result = Clore::default()
-                    .create_order(resent_server_id.clone())
-                    .await;
+                .collect::<Vec<_>>();
+            info!("server_ids:{:?}", cards);
+            if cards.len() > 0 {
+                let resent_server = cards.get(0).unwrap();
+                info!("resent_server_id:{:?}", resent_server);
+                let result = Clore::default().create_order(&resent_server).await;
                 info!("create_order_test:{:?}", result);
                 assert_eq!(true, result.is_ok())
             }
@@ -107,8 +117,17 @@ mod test {
     #[tokio::test]
     async fn create_order_web_api_test() {
         crate::common::setup();
-        panic!("请更改id测试！！");
-        Clore::create_order_web_api(77777).await;
+        // panic!("请更改id测试！！");
+        let resent_ids =  [16296, 23859];
+        let mut cards = Clore::default().marketplace().await.unwrap();
+        cards = cards
+            .iter()
+            .filter(|card| resent_ids.contains(&card.server_id))
+            .map(|card| card.clone())
+            .collect::<Vec<Card>>();
+        for card in cards.iter()  {
+            Clore::create_order_web_api(card).await;
+        }
     }
 
     #[tokio::test]

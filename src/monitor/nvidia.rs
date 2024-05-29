@@ -20,20 +20,9 @@ pub enum GeForce {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct GeForces(Vec<GeForce>);
-
-impl Deref for GeForces {
-    type Target = Vec<GeForce>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for GeForces {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
+pub struct GeForces {
+    nvidias: Vec<GeForce>,
+    commands: Vec<String>,
 }
 
 impl GeForces {
@@ -91,21 +80,24 @@ impl GeForces {
                 })
                 .collect::<Vec<GeForce>>(),
             Err(e) => {
-                error!("获取显卡信息失败:{:?}",e);
+                error!("获取显卡信息失败:{:?}", e);
                 Vec::new()
-            },
+            }
         };
-        GeForces(nvidias)
+        GeForces {
+            nvidias: nvidias,
+            commands: Vec::new(),
+        }
     }
 
     fn command() -> Result<String, String> {
-//         let output = r"
-// GPU 0: NVIDIA GeForce RTX 4070 (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
-// GPU 1: NVIDIA GeForce RTX 4070 Ti (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
-// GPU 2: NVIDIA GeForce RTX 4070 Ti SUPER (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
-// GPU 4: NVIDIA GeForce RTX 4090 (UUID: GPU-13d44c72-a798-c126-54cb-98e543beadd3)
-//         ";
-// return Ok(output.to_string());
+        //         let output = r"
+        // GPU 0: NVIDIA GeForce RTX 4070 (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
+        // GPU 1: NVIDIA GeForce RTX 4070 Ti (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
+        // GPU 2: NVIDIA GeForce RTX 4070 Ti SUPER (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)
+        // GPU 4: NVIDIA GeForce RTX 4090 (UUID: GPU-13d44c72-a798-c126-54cb-98e543beadd3)
+        //         ";
+        // return Ok(output.to_string());
         let output = Command::new("nvidia-smi")
             .arg("-L")
             .output()

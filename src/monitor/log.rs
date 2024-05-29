@@ -98,26 +98,25 @@ impl Logs {
     }
 }
 
-#[derive(Serialize,Deserialize,Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Status {
     Success,
-    Fail
+    Fail,
 }
 
-#[derive(Serialize,Deserialize,Debug)]
-pub struct RunLog{
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RunLog {
     #[serde(rename(deserialize = "WalletAddr"))]
-    pub wallet_addr:String,
-     #[serde(rename(deserialize = "CompletedTime"))]
-    pub completed_time:String,
-     #[serde(rename(deserialize = "TrainRuntime"))]
-    pub trainrun_time:f64,
-     #[serde(rename(deserialize = "Status"))]
-    pub status:Status
+    pub wallet_addr: String,
+    #[serde(rename(deserialize = "CompletedTime"))]
+    pub completed_time: String,
+    #[serde(rename(deserialize = "TrainRuntime"))]
+    pub trainrun_time: f64,
+    #[serde(rename(deserialize = "Status"))]
+    pub status: Status,
 }
 
-
-#[derive(Serialize,Deserialize,Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 struct RunLogs(Vec<RunLog>);
 
 impl Deref for RunLogs {
@@ -133,7 +132,6 @@ impl DerefMut for RunLogs {
         &mut self.0
     }
 }
-
 
 pub async fn read_log_file(log: Log) {
     info!("监听新文件日志:{:?}", log.filename);
@@ -217,8 +215,8 @@ pub async fn read_log_file(log: Log) {
                             let result = reader_locked.0.send(message);
                             if result.is_err() {
                                 error!("日志上传失败:{:?}", result);
-                            }else{
-                                 info!("文件:{}已反馈日志到上游！",address);
+                            } else {
+                                info!("文件:{}已反馈日志到上游！", address);
                             }
 
                             drop(reader_locked);
@@ -233,10 +231,8 @@ pub async fn read_log_file(log: Log) {
                 let _ = reader.read_to_string(&mut buf).await;
                 if !buf.is_empty() {
                     let result = serde_json::from_str::<RunLogs>(&buf);
-                    info!("{:?}",result);
-                    if result.is_ok() {
-                        
-                    }
+                    info!("{:?}", result);
+                    if result.is_ok() {}
                     buf = buf.replace(" ", "").replace("\n", "").replace("\r", "");
                     let reader_chan = Arc::clone(&LOG);
                     let reader_chan_locked = reader_chan.lock().await;
@@ -244,7 +240,7 @@ pub async fn read_log_file(log: Log) {
                     if result.is_err() {
                         error!("日志上传失败:{:?}", result);
                     } else {
-                        info!("文件:{}已反馈日志到上游！",address);
+                        info!("文件:{}已反馈日志到上游！", address);
                     }
                     let _ = reader.seek(SeekFrom::Start(0)).await;
                     drop(reader_chan_locked);

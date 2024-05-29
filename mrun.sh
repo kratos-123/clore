@@ -1,15 +1,15 @@
-apt-get update -y && apt-get upgrade -y && apt install build-essential
+apt-get update -y 
+apt-get upgrade -y 
+apt install build-essential -y
+apt install pkg-config gcc libssl-dev python3.8-venv -y
 
 curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo npm install pm2 -g 
 
-sudo rm -rf /usr/local/go
-curl https://dl.google.com/go/go1.22.1.linux-amd64.tar.gz | sudo tar -C/usr/local -zxvf - ;
-cat <<'EOF' >>$HOME/.bashrc
-export GOROOT=/usr/local/go
-export GOPATH=$HOME/go
-export GO111MODULE=on
-export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-EOF
+if [ ! -f $HOME/.cargo/env ] ;then
+    chmod +x ./rust.sh && ./rust.sh -y
+fi
+
+source $HOME/.cargo/env
 source $HOME/.bashrc
 
 cd
@@ -27,14 +27,10 @@ conda activate nimble
 
 mkdir $HOME/nimble && cd $HOME/nimble
 
-git clone https://github.com/nimble-technology/wallet-public.git
-
-cd wallet-public
-
-make install
 
 cd  $HOME/nimble
 git clone https://github.com/b5prolh/nimble-miner-public.git
 cd nimble-miner-public
+sed  sed -ir 's/numpy==1.26.4/numpy==1.24.4/' requirements.txt
 make install
 source ./nimenv_localminers/bin/activate

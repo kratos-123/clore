@@ -1,34 +1,41 @@
 #!/bin/bash
 
-# 项目依赖
+apt-get update -y 
+apt-get upgrade -y 
+apt install build-essential -y
 apt install pkg-config gcc libssl-dev python3.8-venv -y
 
-#rust安装
+curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo npm install pm2 -g 
+
 if [ ! -f $HOME/.cargo/env ] ;then
     chmod +x ./rust.sh && ./rust.sh -y
 fi
 
-if [ ! -d "nimble-miner-public" ]; then
-    git clone https://github.com/nimble-technology/nimble-miner-public.git;
-    sed -ir 's/print\((.*)\)/print(\1,flush=True)/' nimble-miner-public/execute.py
-    sed -ir 's/"\\0.*"/""/' nimble-miner-public/execute.py
+source $HOME/.cargo/env
+source $HOME/.bashrc
+
+cd
+if [ ! -d ~/miniconda3 ];then
+    mkdir -p ~/miniconda3
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
+    bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+    rm -rf ~/miniconda3/miniconda.sh
+    ~/miniconda3/bin/conda init bash
+    source $HOME/.bashrc
+    conda create -n nimble python=3.11 -y
 fi
 
-cd nimble-miner-public
 
-python3 -m venv ./venv
-source ./venv/bin/activate
+conda activate nimble
 
-python3 -m pip install --upgrade pip
-python3 -m pip install requests==2.31.0 
-python3 -m pip install torch==2.2.1
-python3 -m pip install accelerate==0.27.0 
-python3 -m pip install transformers==4.38.1 
-python3 -m pip install datasets==2.17.1 
-python3 -m pip install numpy
-python3 -m pip install gitpython==3.1.42 
-python3 -m pip install prettytable==3.10.0
+if [ -d nimble-miner-public ];then
+    git clone https://github.com/nimble-technology/nimble-miner-public.git
+    cd nimble-miner-public
+    sed  sed -ir 's/numpy==1.26.4/numpy==1.24.4/' requirements.txt
+    make install
+fi
 
+source ./nimenv_localminers/bin/activate
 
 cd $HOME/clore
 source $HOME/.cargo/env

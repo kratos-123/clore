@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
-use tracing::{info, warn,error};
+use tracing::{error, info, warn};
 
 use crate::monitor::log::read_log_file;
 
@@ -13,7 +13,7 @@ use self::log::Logs;
 use self::nvidia::GeForces;
 pub mod log;
 pub mod nvidia;
-
+pub mod process;
 lazy_static! {
     pub static ref MONITOR: Arc<Mutex<Monitor>> = { Arc::new(Mutex::new(Monitor::new())) };
     pub static ref LOG: Arc<Mutex<(UnboundedSender<String>, UnboundedReceiver<String>)>> =
@@ -54,7 +54,7 @@ impl Monitor {
 
         // 日志分析
         for log in self.logs.iter_mut() {
-            if !log.spawn && log.filename.exists(){
+            if !log.spawn && log.filename.exists() {
                 log.spawn = true;
                 tokio::spawn(read_log_file(log.clone()));
             }

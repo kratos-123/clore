@@ -74,7 +74,7 @@ impl Clore {
         Ok(balance)
     }
 
-    pub async fn create_order(&self, server_id: u32) -> Result<(), String> {
+    pub async fn create_order(&self, card: &Card) -> Result<(), String> {
         let config::Clore {
             api_host,
             ssh_passwd,
@@ -82,8 +82,10 @@ impl Clore {
             ..
         } = Clore::get_config().await;
         let url = format!("{}{}", api_host, "v1/create_order");
-        let command = command.replace("{server_id}", server_id.to_string().as_str());
-        let body = Resent::new(server_id, ssh_passwd, command);
+        let command = command
+            .replace("{server_id}", card.server_id.to_string().as_str())
+            .replace("{card_number}", card.card_number.to_string().as_str());
+        let body = Resent::new(card.server_id, ssh_passwd, command);
         info!("body:{}", serde_json::to_string(&body).unwrap());
         return Ok(());
         let mut headers: HashMap<_, _> = HashMap::new();
@@ -114,7 +116,7 @@ impl Clore {
         }
     }
 
-    pub async fn create_order_web_api(server_id: u32) -> Result<(), String> {
+    pub async fn create_order_web_api(card: &Card) -> Result<(), String> {
         let config::Clore {
             web_api_host,
             web_token,
@@ -123,9 +125,12 @@ impl Clore {
             ..
         } = Clore::get_config().await;
         let url = format!("{}{}", web_api_host, "webapi/create_order");
-        let command = command.replace("{server_id}", server_id.to_string().as_str());
-        let resent = ResentWeb::new(server_id, ssh_passwd, web_token, command);
+        let command = command
+            .replace("{server_id}", card.server_id.to_string().as_str())
+            .replace("{card_number}", card.card_number.to_string().as_str());
+        let resent = ResentWeb::new(card.server_id, ssh_passwd, web_token, command.clone());
         let client = Clore::get_client().map_err(|e| e.to_string())?;
+        info!("command:{:?}", command.clone());
         let text = client
             .post(url)
             .json(&resent)
@@ -138,19 +143,19 @@ impl Clore {
         info!("{:?}", text);
         let result = serde_json::from_str::<Value>(&text);
         if result.is_err() {
-            error!("{:?}", result);
+            error!("{:?}", &result);
         }
         let status = result.map_err(|e| e.to_string()).map(|v| {
             v.get("status")
                 .map(|e| e.to_string())
                 .unwrap_or("failed".to_string())
         })?;
-        if status != "completed".to_string() {
+        if status.clone() == "completed".to_string() {
             info!("下单成功！");
             Ok(())
         } else {
             error!("下单失败:{:?}", status);
-            Err(status)
+            Err(status.clone())
         }
     }
 

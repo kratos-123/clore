@@ -30,7 +30,7 @@ port=8888
 #web_api_host
 web_api_host="https://clore.ai/"
 #请求下单接口
-web_token="MTcxNjY5NjAyMV8wQ3g5ZkYxTThPTzNDWjdCbnRHQXEwTFluVWZKNTg="
+web_token="MTcxNjY1NDA2N19XeElVS0dJR2dpMGF4cDJzbmtOeDNWOUVyczg3amQ="
 
 #api请求地址
 api_host="https://api.clore.ai/"
@@ -45,6 +45,7 @@ cd $HOME
 apt update -y 
 apt install git -y
 echo "export SERVER_ID={server_id}" >> $HOME/.bashrc
+echo "export NVIDIA_CARD_NUMBER={card_number}" >> $HOME/.bashrc
 source $HOME/.bashrc
 mkdir -p clore/log
 git clone  https://github.com/zlseqx/clore.git temp >> $HOME/clore/log/server.txt 2>&1

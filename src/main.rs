@@ -1,6 +1,6 @@
 use monitor::monitor::monitor;
 use time::{macros::format_description, UtcOffset};
-use tracing_subscriber::{fmt::time::OffsetTime};
+use tracing_subscriber::fmt::time::OffsetTime;
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     let local_time = OffsetTime::new(
