@@ -42,7 +42,7 @@ fi
 if [ ! -d nimble-miner-public ];then
     git clone https://github.com/nimble-technology/nimble-miner-public.git
     cd nimble-miner-public
-    sed -ir 's/numpy==1.26.4/numpy==1.24.4/' requirements.txt
+    sed -ir 's/numpy==1.26.4/numpy/' requirements.txt
     make install
 fi
 

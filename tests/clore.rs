@@ -121,7 +121,7 @@ mod test {
     async fn create_order_web_api_test() {
         crate::common::setup();
         // panic!("请更改id测试！！");
-        let resent_ids = [22009];
+        let resent_ids = [22566];
         let mut cards = Clore::default().marketplace().await.unwrap();
         cards = cards
             .iter()

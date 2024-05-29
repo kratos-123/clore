@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::Read;
 use std::net::IpAddr;
 use std::net::SocketAddr;
@@ -18,6 +19,7 @@ pub struct Ssh {}
 
 impl Ssh {
     pub async fn try_run_command_remote(my_orders: &mut MyOrders) {
+        let mut address = HashMap::<i32,Vec<String>>::new();
         for order in (*my_orders).iter_mut() {
             let domain = order.get_ssh_host();
             let port = order.get_map_ssh_port();
@@ -32,11 +34,16 @@ impl Ssh {
             let port = port.unwrap();
             let result = Ssh::get_remote_ip(domain, port).await;
             if result.is_ok() {
-                Ssh::exec_to_remote(result.unwrap(), "");
+                let result = Ssh::exec_to_remote(result.unwrap(), "");
+                if result.is_ok() {
+                   let addr = result.unwrap();
+                   address.insert(order.server_id, addr);
+                }
             } else {
-                warn!("ssh远程操作失败！")
+                warn!("ssh远程操作失败:{:?}",result)
             }
         }
+        info!("远端总在跑的地址:{:?}",address);
     }
 
     pub fn exec_to_remote(
@@ -48,14 +55,13 @@ impl Ssh {
         info!("链接远程:{},运行命令:{}", socket_addr, ssh_command);
         let tcp = TcpStream::connect(socket_addr).map_err(|e| e.to_string())?;
 
-        let mut sess = Session::new().unwrap();
+        let mut sess = Session::new().map_err(|e|e.to_string())?;
         sess.set_tcp_stream(tcp);
-        sess.handshake().unwrap();
-        sess.userauth_password("root", "MTcxNjMwNDc2N19ZempBSW")
-            .unwrap();
+        sess.handshake().map_err(|e|e.to_string())?;
+        sess.userauth_password("root", "MTcxNjMwNDc2N19ZempBSW").map_err(|e|e.to_string())?;
 
-        let mut channel = sess.channel_session().unwrap();
-        channel.exec(ssh_command).unwrap();
+        let mut channel = sess.channel_session().map_err(|e|e.to_string())?;
+        channel.exec(ssh_command).map_err(|e|e.to_string())?;
         let mut output = String::new();
  
         let result = channel
