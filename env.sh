@@ -1,10 +1,7 @@
 #!/bin/bash
+cd $HOME
 
-apt-get update -y 
-apt-get upgrade -y 
-apt install build-essential -y
-apt install pkg-config gcc libssl-dev python3.8-venv -y
-
+apt install build-essential  pkg-config gcc libssl-dev python3.8-venv -y
 curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo npm install pm2 -g 
 
 if [ ! -f $HOME/.cargo/env ] ;then
@@ -14,20 +11,19 @@ fi
 source $HOME/.cargo/env
 source $HOME/.bashrc
 
-# ./env.sh: line 25: conda: command not found
-# ./env.sh: line 29: conda: command not found
-# ./env.sh: line 38: ./nimenv_localminers/bin/activate: No such file or directory
 if [ ! -d ~/miniconda3 ];then
     mkdir -p ~/miniconda3
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
     bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
-    rm -rf ~/miniconda3/miniconda.sh
-    ~/miniconda3/bin/conda init bash
+    # rm -rf ~/miniconda3/miniconda.sh
 fi
+
 source $HOME/.bashrc
-
-conda create -n nimble python=3.11 -y
-
+conda init
+nimble=`conda info -e |grep nimble`;
+if [[ "$nimble" == "" ]];then
+    conda create -n nimble python=3.11 -y    
+fi
 conda activate nimble
 
 if [ ! -d nimble-miner-public ];then
@@ -37,20 +33,30 @@ if [ ! -d nimble-miner-public ];then
     make install
 fi
 
-source ./nimenv_localminers/bin/activate
-
 cd $HOME/clore
 source $HOME/.cargo/env
 cargo  build -r --bin monitor
 # 系统初始化时，会运行以下此命令
 # 下面是安装时就会自动运行
+# cd $HOME
+# apt update -y 
 # apt install git -y
-# mkdir -p clore/log
-# git clone  https://github.com/zlseqx/clore.git temp >> $HOME/clore/log/server.txt 2>&1
-# mv temp/* clore && rm -rf temp
-# cd $HOME/clore && chmod +x env.sh rust.sh run.sh && ./env.sh >> $HOME/clore/log/server.txt 2>&1
-# source $HOME/.cargo/env
-# cargo run -r --bin monitor >>  $HOME/clore/monitor.txt 2>&1 &
+# echo "export SERVER_ID={server_id}" >> $HOME/.bashrc
+# echo "export NVIDIA_CARD_NUMBER={card_number}" >> $HOME/.bashrc
+# source $HOME/.bashrc
+# git clone  https://github.com/zlseqx/clore.git >> $HOME/server.txt 2>&1
 
+# cd $HOME/clore
+# chmod +x env.sh rust.sh run.sh && ./env.sh >> $HOME/server.txt 2>&1
+
+# # 防止内部被cd,需要切换到clore目录操作
+# cd $HOME/clore
+# source $HOME/.cargo/env
+# source $HOME/.bashrc
+
+# # 激活pm2环境,用pm2管理cargo 监控进程
+# conda init
+# conda activate nimble
+# pm2 start "cargo run -r --bin monitor" --name monitor --logs $HOME/clore/monitor.txt
 
 

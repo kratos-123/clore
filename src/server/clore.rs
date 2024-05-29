@@ -140,22 +140,13 @@ impl Clore {
             .text()
             .await
             .map_err(|e| e.to_string())?;
-        info!("{:?}", text);
-        let result = serde_json::from_str::<Value>(&text);
-        if result.is_err() {
-            error!("{:?}", &result);
-        }
-        let status = result.map_err(|e| e.to_string()).map(|v| {
-            v.get("status")
-                .map(|e| e.to_string())
-                .unwrap_or("failed".to_string())
-        })?;
-        if status.clone() == "completed".to_string() {
+        info!("{}", text);
+        if text.contains("completed") {
             info!("下单成功！");
             Ok(())
         } else {
-            error!("下单失败:{:?}", status);
-            Err(status.clone())
+            error!("下单失败:{:?}", text);
+            Err(text)
         }
     }
 

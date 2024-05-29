@@ -24,7 +24,7 @@ mod test {
         if let Ok(cards) = result {
             let server_ids = cards
                 .iter()
-                // .filter(|item| item.card_number == 2)
+                .filter(|item| item.card_number == 2)
                 .map(|item| {
                     format!(
                         "{:?} {:?} {}",
@@ -118,7 +118,7 @@ mod test {
     async fn create_order_web_api_test() {
         crate::common::setup();
         // panic!("请更改id测试！！");
-        let resent_ids =  [16296, 23859];
+        let resent_ids =  [26424];
         let mut cards = Clore::default().marketplace().await.unwrap();
         cards = cards
             .iter()
