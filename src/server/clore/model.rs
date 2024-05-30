@@ -410,9 +410,9 @@ pub mod my_orders {
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Order {
         #[serde(alias = "id")]
-        pub order_id: i32,
+        pub order_id: u32,
         #[serde(alias = "si")]
-        pub server_id: i32,
+        pub server_id: u32,
         pub pub_cluster: Vec<String>,
         pub tcp_ports: Vec<String>,
         pub http_port: String,

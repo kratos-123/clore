@@ -1,8 +1,4 @@
-use std::{
-    ops::{Deref, DerefMut},
-    process::Command,
-    str::FromStr,
-};
+use std::{process::Command, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 use tracing::{error, info, warn};

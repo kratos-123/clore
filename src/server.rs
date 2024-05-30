@@ -1,10 +1,10 @@
 use actix_web::{get, post};
 use tracing::error;
-use tracing::{info, warn};
+use tracing::info;
 
+pub mod address;
 pub mod clore;
 pub mod ssh;
-pub mod wallet;
 
 #[get("/distribute_address/{card_number}/{server_id}")]
 pub async fn distribute_address() -> String {

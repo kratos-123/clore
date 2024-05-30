@@ -5,14 +5,13 @@ use strum::Display;
 use tokio::sync::Mutex;
 use tracing::{error, info, warn};
 
-use crate::{
-    config::CONFIG,
-    server::clore::{model::Card, Clore},
-};
+use crate::{config::CONFIG, server::clore::Clore};
+
+use super::ssh;
 
 lazy_static::lazy_static! {
-    pub static ref WALLETS_STATE:Arc<Mutex<Wallets>> = {
-        Arc::new(Mutex::new(Wallets::default()))
+    pub static ref WALLETS_STATE:Arc<Mutex<Address>> = {
+        Arc::new(Mutex::new(Address::default()))
     };
 }
 
@@ -37,13 +36,15 @@ pub enum Deployed {
     NOTASSIGNED,
     DEPLOYING {
         orderid: u32,
+        serverid:u32,
         sshaddr: Option<String>,
-        sshport: Option<u32>,
+        sshport: Option<u16>,
     },
     DEPLOYED {
         orderid: u32,
+        serverid:u32,
         sshaddr: Option<String>,
-        sshport: Option<u32>,
+        sshport: Option<u16>,
     },
 }
 
@@ -60,15 +61,15 @@ impl Wallet {
 }
 
 #[derive(PartialEq, Debug)]
-pub struct Wallets(pub HashMap<String, Wallet>);
+pub struct Address(pub HashMap<String, Wallet>);
 
-impl std::ops::DerefMut for Wallets {
+impl std::ops::DerefMut for Address {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl std::ops::Deref for Wallets {
+impl std::ops::Deref for Address {
     type Target = HashMap<String, Wallet>;
 
     fn deref(&self) -> &Self::Target {
@@ -76,16 +77,16 @@ impl std::ops::Deref for Wallets {
     }
 }
 
-impl Default for Wallets {
+impl Default for Address {
     fn default() -> Self {
         Self(Default::default())
     }
 }
 
-impl Wallets {
+impl Address {
     async fn mstaddress(address: &str) -> AddressType {
         let url = "https://mainnet.nimble.technology/check_balance";
-        let result = Wallets::curl(url, address).await;
+        let result = Address::curl(url, address).await;
         if let Err(_) = result {
             return AddressType::NULL;
         }
@@ -99,7 +100,7 @@ impl Wallets {
 
     async fn subaddress(address: &str) -> AddressType {
         let url = "https://mainnet.nimble.technology/register_particle";
-        let result = Wallets::curl(url, address).await;
+        let result = Address::curl(url, address).await;
         if let Err(_) = result {
             return AddressType::NULL;
         }
@@ -129,10 +130,7 @@ impl Wallets {
 
         let response = result.unwrap();
 
-        if !&response.status().is_success() {
-            let msg = format!("远程响应状态码不正确:{}", response.status());
-            warn!(msg);
-        }
+        info!("远程响应状态码:{}", response.status());
 
         let result = response.text().await.map_err(|e| e.to_string());
         if let Err(msg) = &result {
@@ -140,7 +138,7 @@ impl Wallets {
             return Err(msg.clone());
         }
         let text = &result.unwrap();
-        info!("response:{:?}", text);
+        info!("远程响应结果:{}", text);
         Ok(text.to_string())
     }
 
@@ -168,7 +166,7 @@ impl Wallets {
             }
 
             let (subaddress, mstaddress) =
-                tokio::join!(Wallets::subaddress(&address), Wallets::mstaddress(&address));
+                tokio::join!(Address::subaddress(&address), Address::mstaddress(&address));
             info!("地址检测结果:{:?},{:?}", mstaddress, subaddress);
             let addr_type = if let AddressType::MASTER = mstaddress {
                 AddressType::MASTER
@@ -189,13 +187,29 @@ impl Wallets {
 
     // 过滤规则
     // 未分配订单id的服务器
-    pub async fn filter(&self) -> Vec<Wallet> {
+    pub async fn filter(&mut self) -> Vec<Wallet> {
         let mut wallets: Vec<Wallet> = Vec::new();
-        for (_, wallet) in (*self).iter() {
+        let result = Clore::default().my_orders().await;
+        if let Ok(orders) = result {
+            let (lists, error) = ssh::Ssh::try_run_command_remote(&orders).await;
+            if !error.is_empty() {
+                return wallets;
+            }
+            for (address, deployed) in lists {
+                for wallet in wallets.iter_mut() {
+                    if wallet.address == address {
+                        wallet.deploy = deployed.clone();
+                    }
+                }
+            }
+        }
+
+        for (_, wallet) in (*self).iter_mut() {
             if wallet.addr_type == AddressType::SUB && wallet.deploy == Deployed::NOTASSIGNED {
                 wallets.push(wallet.clone());
             }
         }
+
         wallets
     }
 
@@ -203,9 +217,7 @@ impl Wallets {
     pub async fn assgin_server(
         &mut self,
         wallet_adress: &str,
-        order_id: u32,
-        sshaddr: String,
-        sshport: u32,
+        deploy:Deployed
     ) -> Result<(), String> {
         if !(*self).contains_key(wallet_adress) {
             return Err("不存在钱包地址！".to_string());
@@ -213,11 +225,7 @@ impl Wallets {
         let local_time = Local::now();
         let wallet = (*self).get_mut(wallet_adress).unwrap();
         if Deployed::NOTASSIGNED == wallet.deploy {
-            wallet.deploy = Deployed::DEPLOYING {
-                orderid: order_id,
-                sshaddr: Some(sshaddr),
-                sshport: Some(sshport),
-            };
+            wallet.deploy = deploy;
             wallet.start_time = Some(local_time);
             Ok(())
         } else {
@@ -232,6 +240,7 @@ impl Wallets {
         let wallet = (*self).get_mut(wallet_adress).unwrap();
         if let Deployed::DEPLOYING {
             orderid,
+            serverid,
             sshaddr,
             sshport,
         } = &wallet.deploy
@@ -240,6 +249,7 @@ impl Wallets {
             wallet.report_last_time = Some(local_time);
             wallet.deploy = Deployed::DEPLOYED {
                 orderid: orderid.clone(),
+                serverid:serverid.clone(),
                 sshaddr: sshaddr.clone(),
                 sshport: sshport.clone(),
             };
@@ -288,27 +298,28 @@ pub async fn pool() {
     loop {
         let wallets = Arc::clone(&WALLETS_STATE);
         let mut locked = wallets.lock().await;
-        let other = Wallets::load_address_file().await;
+        let other = Address::load_address_file().await;
         locked.check(&other).await;
         let wallets = locked.filter().await;
-        let address = wallets
-            .iter()
-            .map(|wallet| wallet.address.to_string())
-            .collect::<Vec<String>>();
+        info!("当前绑定信息:{:?}", *locked);
+        // let address = wallets
+        //     .iter()
+        //     .map(|wallet| wallet.address.to_string())
+        //     .collect::<Vec<String>>();
 
         if wallets.len() > 0 {
-            warn!("待分配地址:\n{}", address.join("\n"));
-            let market = Clore::default().marketplace().await;
-            if let Ok(cards) = market {
-                let server_ids = cards
-                    .iter()
-                    .filter(|item| item.card_number == 2)
-                    .map(|item| item.server_id)
-                    .collect::<Vec<u32>>();
-                info!("server_ids:{:?}", server_ids);
-            }
+            // warn!("待分配地址:\n{}", address.join("\n"));
+            // let market = Clore::default().marketplace().await;
+            // if let Ok(cards) = market {
+            //     let server_ids = cards
+            //         .iter()
+            //         .filter(|item| item.card_number == 2)
+            //         .map(|item| item.server_id)
+            //         .collect::<Vec<u32>>();
+            //     info!("server_ids:{:?}", server_ids);
+            // }
         }
         drop(locked);
-        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(60 * 5)).await;
     }
 }

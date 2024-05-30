@@ -6,7 +6,6 @@ use std::{
     sync::Arc,
 };
 
-use futures::executor::block_on;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;

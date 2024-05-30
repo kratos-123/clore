@@ -1,13 +1,13 @@
-use core::ascii;
 use std::fs;
 use std::io::SeekFrom;
 use std::ops::{Deref, DerefMut};
+use std::path::PathBuf;
 use std::sync::Arc;
-use std::{collections::HashMap, path::PathBuf, process::Command};
 
 use indexmap::IndexMap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use strum::Display;
 use tokio::io::BufReader;
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncSeekExt};
 use tracing::{error, info};
@@ -98,7 +98,7 @@ impl Logs {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Display)]
 pub enum Status {
     Success,
     Fail,
@@ -118,6 +118,20 @@ pub struct RunLog {
 
 #[derive(Serialize, Deserialize, Debug)]
 struct RunLogs(Vec<RunLog>);
+
+impl std::fmt::Display for RunLogs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for log in (*self).iter() {
+            let s = format!(
+                "Finish-Task:{} {} {} {:0.5}\n",
+                log.wallet_addr, log.status, log.completed_time, log.trainrun_time
+            );
+            let _ = f.write_str(&s);
+        }
+
+        Ok(())
+    }
+}
 
 impl Deref for RunLogs {
     type Target = Vec<RunLog>;
@@ -215,10 +229,7 @@ pub async fn read_log_file(log: Log) {
                             let result = reader_locked.0.send(message);
                             if result.is_err() {
                                 error!("日志上传失败:{:?}", result);
-                            } else {
-                                info!("文件:{}已反馈日志到上游！", address);
                             }
-
                             drop(reader_locked);
                             hashstring.clear();
                         }
@@ -231,19 +242,21 @@ pub async fn read_log_file(log: Log) {
                 let _ = reader.read_to_string(&mut buf).await;
                 if !buf.is_empty() {
                     let result = serde_json::from_str::<RunLogs>(&buf);
-                    info!("{:?}", result);
-                    if result.is_ok() {}
-                    buf = buf.replace(" ", "").replace("\n", "").replace("\r", "");
-                    let reader_chan = Arc::clone(&LOG);
-                    let reader_chan_locked = reader_chan.lock().await;
-                    let result = reader_chan_locked.0.send(buf.clone());
-                    if result.is_err() {
-                        error!("日志上传失败:{:?}", result);
+                    if let Ok(logs) = result {
+                        buf = logs.to_string();
                     } else {
-                        info!("文件:{}已反馈日志到上游！", address);
+                        buf = buf.replace(" ", "").replace("\n", "").replace("\r", "");
                     }
-                    let _ = reader.seek(SeekFrom::Start(0)).await;
-                    drop(reader_chan_locked);
+                    if !buf.is_empty() {
+                        let reader_chan = Arc::clone(&LOG);
+                        let reader_chan_locked = reader_chan.lock().await;
+                        let result = reader_chan_locked.0.send(buf.clone());
+                        if result.is_err() {
+                            error!("日志上传失败:{:?}", result);
+                        }
+                        let _ = reader.seek(SeekFrom::Start(0)).await;
+                        drop(reader_chan_locked);
+                    }
                 }
                 tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
             },

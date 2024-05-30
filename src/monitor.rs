@@ -1,11 +1,10 @@
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
 use crate::monitor::log::read_log_file;
 
@@ -23,6 +22,7 @@ lazy_static! {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Monitor {
     server_id: Option<u32>,
+    address: Vec<String>,
     nvidias: GeForces,
     logs: Logs,
     upload_log: HashMap<String, Vec<String>>,
@@ -32,6 +32,7 @@ impl Monitor {
     fn new() -> Monitor {
         Monitor {
             server_id: Monitor::get_server_id(),
+            address: Monitor::get_address(),
             nvidias: GeForces::new(),
             logs: Logs::new(),
             upload_log: HashMap::<String, Vec<String>>::new(),
@@ -47,6 +48,26 @@ impl Monitor {
             error!("无法从环境变量中获取当前SERVER_ID")
         }
         server_id
+    }
+
+    fn get_address() -> Vec<String> {
+        let result = std::env::var("ADDRESS")
+            .map_err(|e| e.to_string())
+            .and_then(|addrs| {
+                Ok(addrs
+                    .split(",")
+                    .map(|s| s.trim().to_string())
+                    .collect::<Vec<String>>())
+            })
+            .ok();
+        let address = match result {
+            Some(addrs) => addrs,
+            None => {
+                error!("无法从环境变量中获取ADDRESSES");
+                Vec::new()
+            }
+        };
+        address
     }
 
     pub async fn dispatch(&mut self) {
@@ -99,12 +120,12 @@ pub async fn monitor() {
     loop {
         let monitor = Arc::clone(&MONITOR);
         let mut monitor_locked = monitor.lock().await;
-
+        info!("{:?}", *monitor_locked);
         let reader = Arc::clone(&LOG);
         let mut reader_locked = reader.lock().await;
 
         tokio::select! {
-            result = (*monitor_locked).dispatch() => {
+            _ = (*monitor_locked).dispatch() => {
                 // info!("{:?}",result);
                 drop(monitor_locked);
             },

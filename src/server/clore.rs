@@ -74,7 +74,7 @@ impl Clore {
         Ok(balance)
     }
 
-    pub async fn create_order(&self, card: &Card) -> Result<(), String> {
+    pub async fn create_order(&self, card: &Card, address: Vec<String>) -> Result<(), String> {
         let config::Clore {
             api_host,
             ssh_passwd,
@@ -84,10 +84,10 @@ impl Clore {
         let url = format!("{}{}", api_host, "v1/create_order");
         let command = command
             .replace("{server_id}", card.server_id.to_string().as_str())
-            .replace("{card_number}", card.card_number.to_string().as_str());
+            .replace("{card_number}", card.card_number.to_string().as_str())
+            .replace("{address}", address.join(",").as_str());
         let body = Resent::new(card.server_id, ssh_passwd, command);
         info!("body:{}", serde_json::to_string(&body).unwrap());
-        return Ok(());
         let mut headers: HashMap<_, _> = HashMap::new();
         headers.insert("Content-type", HeaderValue::from_str("application/json"));
         let text = Clore::get_client()
@@ -116,7 +116,7 @@ impl Clore {
         }
     }
 
-    pub async fn create_order_web_api(card: &Card) -> Result<(), String> {
+    pub async fn create_order_web_api(card: &Card, address: Vec<String>) -> Result<(), String> {
         let config::Clore {
             web_api_host,
             web_token,
@@ -127,7 +127,8 @@ impl Clore {
         let url = format!("{}{}", web_api_host, "webapi/create_order");
         let command = command
             .replace("{server_id}", card.server_id.to_string().as_str())
-            .replace("{card_number}", card.card_number.to_string().as_str());
+            .replace("{card_number}", card.card_number.to_string().as_str())
+            .replace("{address}", address.join(",").as_str());
         let resent = ResentWeb::new(card.server_id, ssh_passwd, web_token, command.clone());
         let client = Clore::get_client().map_err(|e| e.to_string())?;
         info!("command:{:?}", command.clone());
@@ -162,7 +163,7 @@ impl Clore {
             .text()
             .await
             .map_err(|e| e.to_string())?;
-        info!("my_order_text:{:?}", text);
+        info!("my_order_text:{}", text);
         let result: Result<MyOrders, String> =
             serde_json::from_str::<MyOrders>(&text).map_err(|e| e.to_string());
         info!("获取到订单号:{:?}", result);
@@ -209,7 +210,7 @@ impl Clore {
             .build()
     }
 
-    async fn get_config() -> config::Clore {
+    pub async fn get_config() -> config::Clore {
         let mutex_conf = Arc::clone(&CONFIG);
         let config = &mutex_conf.lock().await;
         (*config).clore.clone()
