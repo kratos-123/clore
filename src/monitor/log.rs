@@ -65,7 +65,7 @@ impl DerefMut for Logs {
 
 impl Logs {
     pub async fn iter_log_files(&mut self) {
-        let path = std::env::current_dir().unwrap().join("log");
+        let path = std::env::current_dir().unwrap().join("logs");
         if !path.exists() {
             let _ = std::fs::create_dir_all(&path);
         }
