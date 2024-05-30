@@ -103,7 +103,7 @@ impl Logs {
 #[derive(Serialize, Deserialize, Debug, Display)]
 pub enum Status {
     Success,
-    Fail,
+    Failed,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
