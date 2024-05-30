@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use strum::Display;
 use tokio::io::BufReader;
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncSeekExt};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 use crate::monitor::LogChannel;
 
@@ -139,8 +139,8 @@ impl std::fmt::Display for RunLogs {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for log in (*self).iter() {
             let s = format!(
-                "{} {} {} {} {:0.5}\n",
-                log.wallet_addr,log.wallet_addr, log.status, log.completed_time, log.trainrun_time
+                "{} {} {} {:0.5}\n",
+                log.wallet_addr, log.status, log.completed_time, log.trainrun_time
             );
             let _ = f.write_str(&s);
         }
@@ -250,6 +250,7 @@ pub async fn read_log_file(log: Log) {
                     if let Ok(logs) = result {
                         buf = logs.to_string();
                     } else {
+                        warn!("{:?}",result);
                         buf = buf.replace(" ", "").replace("\n", "").replace("\r", "");
                     }
                     if !buf.is_empty() {
