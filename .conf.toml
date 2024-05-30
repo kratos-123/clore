@@ -47,7 +47,8 @@ cd $HOME
 apt update -y 
 apt install git -y
 echo "export SERVER_ID={server_id}" >> $HOME/.bashrc
-echo "export NVIDIA_CARD_NUMBER={card_number}" >> $HOME/.bashrc
+echo "export CARD_NUMBER={card_number}" >> $HOME/.bashrc
+echo "export ADDRESS={address}" >> $HOME/.bashrc
 source $HOME/.bashrc
 git clone  https://github.com/zlseqx/clore.git >> $HOME/server.txt 2>&1
 

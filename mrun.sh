@@ -1,36 +1,46 @@
-apt-get update -y 
-apt-get upgrade -y 
-apt install build-essential -y
-apt install pkg-config gcc libssl-dev python3.8-venv -y
+#!/usr/bin/env bash
+set -e
 
-curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo npm install pm2 -g 
+address=`env|grep ADDRESS |grep -v grep |awk -F '=' '{print $2}'`;
+addr=(${address//,/ });
+ 
+for var in ${addr[@]}
+do
+   echo $var
+done
 
-if [ ! -f $HOME/.cargo/env ] ;then
-    chmod +x ./rust.sh && ./rust.sh -y
+addr_length=${#addr[@]}
+echo "ADDRESS:数组长度为: $addr_length"
+
+nvidia=`nvidia-smi -L | awk -F ' ' '{print $2}'| sed 's/://'`;
+
+nvidias=(${nvidia//\n/ })
+for var in ${nvidias[@]}
+do
+   echo $var
+done
+
+
+nvidia_length=${#nvidias[@]}
+echo "NVIDIA:数组长度为: $nvidia_length";
+
+if [ $nvidia_length -ne $addr_length ];then
+    echo "Error:当前显卡和地址环境数量不匹配"
+    exit 1;
 fi
 
-source $HOME/.cargo/env
-source $HOME/.bashrc
-
-cd
-mkdir -p ~/miniconda3
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
-bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
-rm -rf ~/miniconda3/miniconda.sh
-~/miniconda3/bin/conda init bash
-source $HOME/.bashrc
+#cd nimble-miner-public/
+#
+#conda init
+#conda activate nimble
+#source ./nimenv_localminers/bin/activate
+#
+#pm2 start "CUDA_VISIBLE_DEVICES=${nivdai_card_number} make run addr=$2" --name nimble${nivdai_card_number} --log $HOME/clore/log/$2.txt
 
 
+for index in ${addr[@]}
+do
+   command="pm2 start "CUDA_VISIBLE_DEVICES=${index} make run addr=${addr[index]}" --name nimble${index} --log $HOME/clore/log/${addr[index]}.txt"
+done
 
-conda create -n nimble python=3.11 -y
-conda activate nimble
 
-mkdir $HOME/nimble && cd $HOME/nimble
-
-
-cd  $HOME/nimble
-git clone https://github.com/b5prolh/nimble-miner-public.git
-cd nimble-miner-public
-sed  sed -ir 's/numpy==1.26.4/numpy==1.24.4/' requirements.txt
-make install
-source ./nimenv_localminers/bin/activate
