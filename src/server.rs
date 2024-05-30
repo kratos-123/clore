@@ -1,5 +1,5 @@
 use std::fs::OpenOptions;
-use std::io::Write;
+use std::io::{Read, Write};
 
 use actix_web::web;
 use actix_web::{get, post};
@@ -16,7 +16,7 @@ pub async fn distribute_address() -> String {
 }
 
 #[post("/printlnlog/{server_id}/{filename}")]
-pub async fn printlnlog(body: String, pathinfo: web::Path<(String, String)>) -> String {
+pub async fn printlnlog(mut body: String, pathinfo: web::Path<(String, String)>) -> String {
     let regex = regex::Regex::new(r"err|Err").unwrap();
     if regex.is_match(&body) {
         error!("{:?}", body);
@@ -25,19 +25,33 @@ pub async fn printlnlog(body: String, pathinfo: web::Path<(String, String)>) -> 
     }
     let (server_id, filename) = pathinfo.into_inner();
     if let Ok(filepath) = std::env::current_dir() {
-        let filename = format!("{}{}.log", filename, server_id);
-        let mut path = filepath.join("logs");
+        let filename = format!("{}_{}.log", filename, server_id);
+        let mut path = filepath.join("server_logs");
         if !path.exists() {
             let _ = std::fs::create_dir_all(path.clone());
         }
-        path = path.join(filename);
+        path = path.join(filename.clone());
         let isopened = OpenOptions::new()
             .append(true)
             .create(true)
             .read(true)
             .open(path.clone());
-        if let Ok(writer) =  isopened {
-            let mut buf = std::io::BufWriter::new(writer);
+        if let Ok(mut file) =  isopened {
+            if filename.find("my_logs").is_some() {
+                let mut contents = String::new();
+                let mut reader = std::io::BufReader::new(file);
+                let _ = reader.read_to_string(&mut contents);
+                let mut content = Vec::<String>::new();
+                for report in body.split("\n").into_iter() {
+                    let report = report.trim();
+                    if contents.find( report).is_none() {
+                        content.push(report.to_string());
+                    }
+                }
+                body = content.join("\n");
+                file = reader.into_inner();
+            }
+            let mut buf = std::io::BufWriter::new(file);
             let row = format!("{}\n",body);
             let _ = buf.write_all(row.as_bytes());
         }else {

@@ -36,8 +36,8 @@ impl Ssh {
             let sshaddr = domain.unwrap();
             let sshport = port.unwrap();
             info!(
-                "远程测试中:server_id:{},{}:{}",
-                order.server_id, sshaddr, sshaddr
+                "远程测试中:server_id:{},order_id:{},{}:{}",
+                order.server_id,order.order_id, sshaddr, sshaddr
             );
             let result = Ssh::get_remote_ip(sshaddr.clone(), sshport).await;
             if result.is_ok() {

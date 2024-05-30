@@ -12,6 +12,8 @@ use tokio::io::BufReader;
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncSeekExt};
 use tracing::{error, info};
 
+use crate::monitor::LogChannel;
+
 use super::LOG;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -119,21 +121,7 @@ pub struct RunLog {
 #[derive(Serialize, Deserialize, Debug)]
 struct RunLogs(Vec<RunLog>);
 
-impl std::fmt::Display for RunLogs {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for log in (*self).iter() {
-            let s = format!(
-                "Finish-Task:{} {} {} {:0.5}\n",
-                log.wallet_addr, log.status, log.completed_time, log.trainrun_time
-            );
-            let _ = f.write_str(&s);
-        }
-
-        Ok(())
-    }
-}
-
-impl Deref for RunLogs {
+impl Deref for  RunLogs{
     type Target = Vec<RunLog>;
 
     fn deref(&self) -> &Self::Target {
@@ -147,6 +135,21 @@ impl DerefMut for RunLogs {
     }
 }
 
+impl std::fmt::Display for RunLogs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for log in (*self).iter() {
+            let s = format!(
+                "{} {} {} {} {:0.5}\n",
+                log.wallet_addr,log.wallet_addr, log.status, log.completed_time, log.trainrun_time
+            );
+            let _ = f.write_str(&s);
+        }
+
+        Ok(())
+    }
+}
+
+
 pub async fn read_log_file(log: Log) {
     info!("监听新文件日志:{:?}", log.filename);
     let address = log
@@ -156,7 +159,8 @@ pub async fn read_log_file(log: Log) {
         .to_str()
         .unwrap()
         .to_string()
-        .replace(".txt", "");
+        .replace(".txt", "")
+        .replace(".json", "");
     let result = tokio::fs::OpenOptions::new()
         .read(true)
         .open(log.filename.clone())
@@ -199,8 +203,8 @@ pub async fn read_log_file(log: Log) {
                             let (_, [operate, extra, percent, task, downspeed]) =
                                 captures.extract();
                             let string = format!(
-                                "{} {}{} {} {} {}",
-                                address, operate, extra, percent, task, downspeed
+                                "{}{} {} {} {}",
+                                operate, extra, percent, task, downspeed
                             );
                             hashstring.insert(format!("{}{}", operate, extra), string);
                         } else {
@@ -210,7 +214,7 @@ pub async fn read_log_file(log: Log) {
 
                                 let (_, [percent, task, downspeed]) = captures.extract();
                                 let string =
-                                    format!("{} {} {} {}", address, percent, task, downspeed);
+                                    format!("{} {} {}", percent, task, downspeed);
                                 hashstring.insert("task_prcess".to_string(), string);
                             } else {
                                 let string = format!("{} {}", address, line);
@@ -219,11 +223,12 @@ pub async fn read_log_file(log: Log) {
                         }
                     } else {
                         if !hashstring.is_empty() {
-                            let message = hashstring
+                            let body = hashstring
                                 .iter()
                                 .map(|(_, item)| item.clone())
                                 .collect::<Vec<String>>()
                                 .join("\n");
+                            let message = LogChannel{ filename: address.clone(), body: body };
                             let reader = Arc::clone(&LOG);
                             let reader_locked = reader.lock().await;
                             let result = reader_locked.0.send(message);
@@ -248,9 +253,10 @@ pub async fn read_log_file(log: Log) {
                         buf = buf.replace(" ", "").replace("\n", "").replace("\r", "");
                     }
                     if !buf.is_empty() {
+                        let message = LogChannel{ filename: address.clone(), body: buf};
                         let reader_chan = Arc::clone(&LOG);
                         let reader_chan_locked = reader_chan.lock().await;
-                        let result = reader_chan_locked.0.send(buf.clone());
+                        let result = reader_chan_locked.0.send(message);
                         if result.is_err() {
                             error!("日志上传失败:{:?}", result);
                         }
@@ -263,3 +269,4 @@ pub async fn read_log_file(log: Log) {
         }
     }
 }
+

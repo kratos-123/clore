@@ -296,12 +296,12 @@ impl Address {
 
 pub async fn pool() {
     loop {
-        // let wallets = Arc::clone(&WALLETS_STATE);
-        // let mut locked = wallets.lock().await;
-        // let other = Address::load_address_file().await;
-        // locked.check(&other).await;
-        // let wallets = locked.filter().await;
-        // info!("当前绑定信息:{:?}", *locked);
+        let wallets = Arc::clone(&WALLETS_STATE);
+        let mut locked = wallets.lock().await;
+        let other = Address::load_address_file().await;
+        locked.check(&other).await;
+        let _wallets = locked.filter().await;
+        info!("当前绑定信息:{:?}", *locked);
         // let address = wallets
         //     .iter()
         //     .map(|wallet| wallet.address.to_string())
