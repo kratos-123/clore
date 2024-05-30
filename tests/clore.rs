@@ -90,21 +90,11 @@ mod test {
         crate::common::setup();
         panic!("请更改id测试！！");
         let resent_ids = [16296, 23859];
-        let mut cards = Clore::default().marketplace().await.unwrap();
-        cards = cards
-            .iter()
-            .filter(|card| resent_ids.contains(&card.server_id))
-            .map(|card| card.clone())
-            .collect::<Vec<Card>>();
-        for card in cards.iter() {
-            Clore::create_order_web_api(card).await;
-        }
-        return;
         let market = Clore::default().marketplace().await;
         if let Ok(cards) = market {
             let cards = cards
                 .into_iter()
-                .filter(|item| item.card_number == 2)
+                // .filter(|item| item.card_number == 2)
                 .collect::<Vec<_>>();
             info!("server_ids:{:?}", cards);
             if cards.len() > 0 {
@@ -122,6 +112,7 @@ mod test {
         crate::common::setup();
         // panic!("请更改id测试！！");
         let resent_ids = [22566];
+        let address = Vec::<String>::new();
         let mut cards = Clore::default().marketplace().await.unwrap();
         cards = cards
             .iter()
@@ -129,7 +120,11 @@ mod test {
             .map(|card| card.clone())
             .collect::<Vec<Card>>();
         for card in cards.iter() {
-            Clore::create_order_web_api(card).await;
+            if card.card_number > address.len() as i32{
+                panic!("所租显卡无法进行地址分配");
+            }
+            let addr = address[0..(card.card_number as usize)].to_vec();
+            Clore::create_order_web_api(card,addr).await;
         }
     }
 

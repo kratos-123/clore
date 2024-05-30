@@ -3,13 +3,13 @@ pub mod common;
 mod wallet {
     use std::{any::Any, collections::HashMap, sync::Arc};
 
-    use monitor::server::wallet::{AddressType, Wallet, Wallets, WALLETS_STATE};
+    use monitor::server::address::{Address, AddressType, Wallet, WALLETS_STATE};
     use tracing::info;
 
     #[tokio::test]
     async fn load_address_file_test() {
         crate::common::setup();
-        let address = Wallets::load_address_file().await;
+        let address = Address::load_address_file().await;
         info!("{:?}", address);
         assert_eq!(std::any::TypeId::of::<Vec<Wallet>>(), address.type_id())
     }
