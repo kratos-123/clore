@@ -71,7 +71,7 @@ impl Monitor {
         let address = match result {
             Some(addrs) => addrs,
             None => {
-                error!("无法从环境变量中获取ADDRESSES");
+                error!("无法从环境变量中获取ADDRESS");
                 Vec::new()
             }
         };
@@ -91,8 +91,8 @@ impl Monitor {
     }
 
     pub async fn upload(&self,body:LogChannel) {
-        info!("上报数据:\n");
         let api = format!("{}/{}/{}",Monitor::get_config().await.api_report_log,self.server_id.unwrap_or_default(),body.filename);
+        info!("上报数据:\n{}",api);
         let client = ClientBuilder::new().build().unwrap();
         let result = client
             .post(api)
