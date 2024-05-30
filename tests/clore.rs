@@ -78,8 +78,6 @@ mod test {
         if cards.len() > 0 {
             let resent_server_id = cards.get(0).unwrap();
             info!("resent_server_id:{:?}", resent_server_id);
-            let result = Clore::default().create_order(&resent_server_id).await;
-            assert_eq!(true, result.is_ok())
         }
 
         assert_eq!(std::any::TypeId::of::<Vec<Card>>(), cards.type_id())
@@ -99,8 +97,12 @@ mod test {
             info!("server_ids:{:?}", cards);
             if cards.len() > 0 {
                 let resent_server = cards.get(0).unwrap();
+                let address = Vec::<String>::new();
+                if resent_server.card_number > address.len() as i32 {
+                    panic!("所租显卡无法进行地址分配");
+                }
                 info!("resent_server_id:{:?}", resent_server);
-                let result = Clore::default().create_order(&resent_server).await;
+                let result = Clore::default().create_order(&resent_server, address).await;
                 info!("create_order_test:{:?}", result);
                 assert_eq!(true, result.is_ok())
             }
@@ -120,11 +122,11 @@ mod test {
             .map(|card| card.clone())
             .collect::<Vec<Card>>();
         for card in cards.iter() {
-            if card.card_number > address.len() as i32{
+            if card.card_number > address.len() as i32 {
                 panic!("所租显卡无法进行地址分配");
             }
             let addr = address[0..(card.card_number as usize)].to_vec();
-            Clore::create_order_web_api(card,addr).await;
+            Clore::create_order_web_api(card, addr).await;
         }
     }
 

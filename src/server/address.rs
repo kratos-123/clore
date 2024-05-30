@@ -36,13 +36,13 @@ pub enum Deployed {
     NOTASSIGNED,
     DEPLOYING {
         orderid: u32,
-        serverid:u32,
+        serverid: u32,
         sshaddr: Option<String>,
         sshport: Option<u16>,
     },
     DEPLOYED {
         orderid: u32,
-        serverid:u32,
+        serverid: u32,
         sshaddr: Option<String>,
         sshport: Option<u16>,
     },
@@ -217,7 +217,7 @@ impl Address {
     pub async fn assgin_server(
         &mut self,
         wallet_adress: &str,
-        deploy:Deployed
+        deploy: Deployed,
     ) -> Result<(), String> {
         if !(*self).contains_key(wallet_adress) {
             return Err("不存在钱包地址！".to_string());
@@ -249,7 +249,7 @@ impl Address {
             wallet.report_last_time = Some(local_time);
             wallet.deploy = Deployed::DEPLOYED {
                 orderid: orderid.clone(),
-                serverid:serverid.clone(),
+                serverid: serverid.clone(),
                 sshaddr: sshaddr.clone(),
                 sshport: sshport.clone(),
             };
@@ -296,30 +296,30 @@ impl Address {
 
 pub async fn pool() {
     loop {
-        let wallets = Arc::clone(&WALLETS_STATE);
-        let mut locked = wallets.lock().await;
-        let other = Address::load_address_file().await;
-        locked.check(&other).await;
-        let wallets = locked.filter().await;
-        info!("当前绑定信息:{:?}", *locked);
+        // let wallets = Arc::clone(&WALLETS_STATE);
+        // let mut locked = wallets.lock().await;
+        // let other = Address::load_address_file().await;
+        // locked.check(&other).await;
+        // let wallets = locked.filter().await;
+        // info!("当前绑定信息:{:?}", *locked);
         // let address = wallets
         //     .iter()
         //     .map(|wallet| wallet.address.to_string())
         //     .collect::<Vec<String>>();
 
-        if wallets.len() > 0 {
-            // warn!("待分配地址:\n{}", address.join("\n"));
-            // let market = Clore::default().marketplace().await;
-            // if let Ok(cards) = market {
-            //     let server_ids = cards
-            //         .iter()
-            //         .filter(|item| item.card_number == 2)
-            //         .map(|item| item.server_id)
-            //         .collect::<Vec<u32>>();
-            //     info!("server_ids:{:?}", server_ids);
-            // }
-        }
-        drop(locked);
+        // if wallets.len() > 0 {
+        //     warn!("待分配地址:\n{}", address.join("\n"));
+        //     let market = Clore::default().marketplace().await;
+        //     if let Ok(cards) = market {
+        //         let server_ids = cards
+        //             .iter()
+        //             .filter(|item| item.card_number == 2)
+        //             .map(|item| item.server_id)
+        //             .collect::<Vec<u32>>();
+        //         info!("server_ids:{:?}", server_ids);
+        //     }
+        // }
+        // drop(locked);
         tokio::time::sleep(std::time::Duration::from_secs(60 * 5)).await;
     }
 }

@@ -52,7 +52,7 @@ impl Ssh {
                             addr.clone(),
                             Deployed::DEPLOYED {
                                 orderid: order.order_id,
-                                serverid:order.server_id,
+                                serverid: order.server_id,
                                 sshaddr: Some(sshaddr.clone()),
                                 sshport: Some(sshport),
                             },
