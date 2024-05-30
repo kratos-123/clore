@@ -19,7 +19,7 @@ address = [
 ]
 
 [monitor]
-api_report_log="http://127.0.0.1:8888/printlnlog"
+api_report_log="http://5.188.33.88:8888/printlnlog"
 
 
 [server]

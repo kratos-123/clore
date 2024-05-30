@@ -10,7 +10,7 @@ async fn main() -> std::io::Result<()> {
     tasks.push(tokio::spawn(pool()));
 
     let _ = HttpServer::new(|| App::new().service(distribute_address).service(printlnlog))
-        .bind(("127.0.0.1", 8888))?
+        .bind(("0.0.0.0", 8888))?
         .run()
         .await;
 

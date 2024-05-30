@@ -1,3 +1,8 @@
-POST http://127.0.0.1:8888/printlnlog/7898/abcd1234
+# POST http://127.0.0.1:8888/printlnlog/7898/abcd1234
 
-这个是body
+# 这个是body
+
+
+POST http://5.188.33.88:8888/printlnlog/22566/nimble1a67mj08trt4sxd4erhzrzgqnufma0h0khtdya3
+
+2024-05-26 15:58:28 Address nimble1a67mj08trt4sxd4erhzrzgqnufma0h0khtdya3 started to work.
