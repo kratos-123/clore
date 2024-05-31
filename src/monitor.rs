@@ -98,7 +98,7 @@ impl Monitor {
         let mut address = Vec::new();
         let py_proc = Command::new("ps")
             .stdin(Stdio::null())
-            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
             .args(["-aeo", "command"])
             .spawn()
             .map_err(|e| e.to_string())?
