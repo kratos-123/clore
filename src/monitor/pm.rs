@@ -1,6 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
 use serde::{Deserialize, Serialize};
+use tracing::info;
 use std::process::Command;
 
 #[allow(dead_code)]
@@ -52,6 +53,7 @@ impl Process {
             .output()
             .map_err(|e| e.to_string())?;
         let row = String::from_utf8(output.stdout).map_err(|e| e.to_string())?;
+        info!("pm2 outpu2:{}",row);
         serde_json::from_str::<Process>(&row).map_err(|e| e.to_string())
     }
 
