@@ -16,19 +16,21 @@ cd nimble-miner-public/
 # source ./nimenv_localminers/bin/activate
 
 action=$1
-service_name=$2
-card_number=${3:-'0'}
-address=$4
+card_number=${2:-'0'}
+service_name="nimble${card_number}"
+address=$3
 
 case $action in
     "start" ) 
-        # 如果变量与 pattern1 匹配，则执行的代码
+        echo "action:${action} service_name:${service_name} card_number:${card_number} address:${address}"
+        pm2 start "CUDA_VISIBLE_DEVICES=${card_number} make run addr=${address}" --name ${service_name} --log $HOME/clore/logs/${address}.txt
         ;; 
     "restart") 
-        # 如果变量与 pattern2 匹配，则执行的代码
+        echo "action:${action} service_name:${service_name}"
+        pm2 restart ${service_name}
         ;; 
     * ) 
-        # 如果变量与任何模式都不匹配，则执行的代码
+        echo "useage:bash execute.sh <restart|start> <service_name> <card_num> <addres>";
         ;; 
 esac
 
