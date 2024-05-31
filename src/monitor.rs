@@ -99,7 +99,7 @@ impl Monitor {
         let py_proc = Command::new("ps")
             .stdin(Stdio::null())
             .stdin(Stdio::piped())
-            .args(["-aeo", "command", "|", "grep", "-v", "grep"])
+            .args(["-aeo", "command"])
             .spawn()
             .map_err(|e| e.to_string())?
             .stdout
