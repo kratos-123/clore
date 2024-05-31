@@ -150,7 +150,7 @@ impl std::fmt::Display for RunLogs {
 }
 
 pub async fn read_log_file(log: Log) {
-    info!("监听新文件日志:{:?}", log.filename);
+    info!("监听新文件日志:{:?}\n", log.filename);
     let address = log
         .filename
         .file_name()

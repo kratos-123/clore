@@ -121,12 +121,11 @@ impl Monitor {
             .stdout;
         let row = String::from_utf8(grep).map_err(|e| e.to_string())?;
 
-        info!("获取运行命令输出:{}", row);
+        info!("获取运行命令输出:{}\n", row);
         let reg: regex::Regex = regex::Regex::new(r"(nimble[\w]+)").map_err(|e| e.to_string())?;
         for command in row.split("\n") {
-            info!("{:?}", command);
             if !command.is_empty() {
-                // /root/clore/nimble-miner-public/nimenv_localminers/bin/python execute.py nimble1mq32psph2c9yqc2j2k8lr67zg50kjkef02tcuu
+                info!("{:?}", command);
                 let (_, [addr]) = reg.captures(command).ok_or("无匹配值！")?.extract::<1>();
                 address.push(addr.to_string());
             }
@@ -161,6 +160,7 @@ impl Monitor {
             let mut bash = std::process::Command::new("bash");
             match action {
                 pm::Action::START => {
+                    info!("创建挖矿程序中...");
                     bash.args([
                         dir.to_str().unwrap(),
                         "start",
@@ -169,6 +169,7 @@ impl Monitor {
                     ]);
                 }
                 pm::Action::RESTART => {
+                    info!("正在重启挖矿程序!");
                     bash.args([dir.to_str().unwrap(), "restart", index.to_string().as_str()]);
                 }
                 pm::Action::SKIP => {
@@ -177,7 +178,9 @@ impl Monitor {
             }
 
             if let Err(e) = bash.output() {
-                error!("执行命令失败:{}", e.to_string());
+                error!("重启挖矿程序失败:{}", e.to_string());
+            }else{
+                info!("已重启挖矿程序");
             }
         }
         Ok(())
