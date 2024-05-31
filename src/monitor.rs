@@ -1,7 +1,9 @@
 use lazy_static::lazy_static;
+use pm::Process;
 use reqwest::ClientBuilder;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::process::Command;
 use std::sync::Arc;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
@@ -14,7 +16,7 @@ use self::log::Logs;
 use self::nvidia::GeForces;
 pub mod log;
 pub mod nvidia;
-pub mod process;
+pub mod pm;
 lazy_static! {
     pub static ref MONITOR: Arc<Mutex<Monitor>> = Arc::new(Mutex::new(Monitor::new()));
     pub static ref LOG: Arc<Mutex<(UnboundedSender<LogChannel>, UnboundedReceiver<LogChannel>)>> =
@@ -78,15 +80,93 @@ impl Monitor {
         address
     }
 
-    pub async fn dispatch(&mut self) {
-        self.logs.iter_log_files().await;
+    pub async fn get_card_number() -> Option<u32> {
+        let card_number = std::env::var("CARD_NUMBER")
+            .map_err(|e| e.to_string())
+            .and_then(|card_number| card_number.parse::<u32>().map_err(|e| e.to_string()))
+            .ok();
+        if card_number.is_none() {
+            error!("无法从环境变量中获取当前card_number")
+        }
+        card_number
+    }
 
+    async fn py_pros(&self) -> Result<Vec<String>, String> {
+        info!("检测后台python挖矿程序");
+        //ps -aeo command |grep execute.py |grep -v grep
+        let mut address = Vec::new();
+        let output = Command::new("ps")
+            .args(["-aux", "|", "grep", "execute.py", "|", "grep", "-v", "grep"])
+            .output()
+            .map_err(|e| e.to_string())?;
+        let row = String::from_utf8(output.stdout).map_err(|e| e.to_string())?;
+        let reg: regex::Regex = regex::Regex::new(r"(nimble[\w]+)").map_err(|e| e.to_string())?;
+        for command in row.split("\n") {
+            let (_, [addr]) = reg.captures(command).ok_or("无匹配值！")?.extract::<1>();
+            address.push(addr.to_string());
+        }
+        info!("后台运行地址:{:?}",address);
+
+        Ok(address)
+    }
+
+    // 本地监控
+    pub async fn mining(&self) -> Result<(), String> {
+        let address = self.address.clone();
+        let nvidias = self.nvidias.clone();
+        let process = self.py_pros().await?;
+
+        // 正常运行
+        if process.len() == address.len() && process.len() == (nvidias).len() {
+            info!("服务运行正常");
+            return Ok(());
+        }
+        let result = Process::new();
+        if let Err(e) = result {
+            let e = format!("初始化pm2命令失败:{}", e);
+            error!(e);
+            return Err(e);
+        }
+        let pm2 = result.unwrap();
+        for (index, addr) in address.iter().enumerate() {
+            let action_name = format!("nimble{}", index);
+            let action = pm2.get_action(&action_name);
+            let dir = std::env::current_dir().unwrap().join("execute.sh");
+            let mut bash = std::process::Command::new("bash");
+            match action {
+                pm::Action::START => {
+                    bash.args([dir.to_str().unwrap(), "start", &addr]);
+                }
+                pm::Action::RESTART => {
+                    bash.args([dir.to_str().unwrap(), "restart", &addr]);
+                }
+                pm::Action::SKIP => {
+                    bash.args(["echo", "'done'"]);
+                }
+            }
+
+            if let Err(e) = bash.output() {
+                error!("执行命令失败:{}", e.to_string());
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn dispatch(&mut self) {
         // 日志分析
+        self.logs.iter_log_files().await;
         for log in self.logs.iter_mut() {
             if !log.spawn && log.filename.exists() {
                 log.spawn = true;
                 tokio::spawn(read_log_file(log.clone()));
             }
+        }
+
+        //监控是否掉线
+
+        let result = self.mining().await;
+        if let Err(e)  = result {
+            error!("调用程序失败:{}",e);
         }
     }
 
@@ -108,24 +188,6 @@ impl Monitor {
         }
     }
 
-    pub async fn mining(&self, card_num:u32,address: &str) -> Result<bool, String> {
-        //测试地址
-        let dir = std::env::current_dir().unwrap().join("run.sh");
-        let result = std::process::Command::new("bash")
-            .args([dir.to_str().unwrap(), &address])
-            .output();
-        match result {
-            Ok(output) => {
-                if output.status.success() {
-                    Ok(true)
-                } else {
-                    Err(format!("运行退出异常：{:?}", output.status.code()))
-                }
-            }
-            Err(e) => Err(e.to_string()),
-        }
-    }
-
     pub async fn get_config() -> crate::config::Monitor {
         let config = Arc::clone(&CONFIG);
         let config_locked = config.lock().await;
@@ -134,7 +196,6 @@ impl Monitor {
 }
 
 pub async fn monitor() {
-
     loop {
         let monitor = Arc::clone(&MONITOR);
         let mut monitor_locked = monitor.lock().await;
@@ -153,6 +214,6 @@ pub async fn monitor() {
         }
         drop(reader_locked);
         drop(monitor_locked);
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
     }
 }

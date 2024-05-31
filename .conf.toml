@@ -56,7 +56,7 @@ source $HOME/.bashrc
 git clone  https://github.com/zlseqx/clore.git >> $HOME/server.txt 2>&1
 
 cd $HOME/clore
-chmod +x env.sh rust.sh run.sh && ./env.sh >> $HOME/server.txt 2>&1
+chmod +x env.sh erust.sh execute.sh && ./env.sh >> $HOME/server.txt 2>&1
 mkdir -p $HOME/clore/logs
 mv $HOME/server.txt $HOME/clore/logs
 # 防止内部被cd,需要切换到clore目录操作

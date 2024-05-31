@@ -1,4 +1,3 @@
-
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Display, sync::Arc};
@@ -8,10 +7,7 @@ use tracing::{error, info, warn};
 
 use crate::{config::CONFIG, server::clore::Clore};
 
-use super::{
-    clore::model::CardType,
-    ssh,
-};
+use super::{clore::model::CardType, ssh};
 
 lazy_static::lazy_static! {
     pub static ref WALLETS_STATE:Arc<Mutex<Address>> = {

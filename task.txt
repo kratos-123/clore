@@ -2,3 +2,8 @@
 2.服务端实时监控未分配地址，进行市场监控租赁显卡，计算最优显卡，
     租赁下服务器后进行预分配地址，等待服务器自动化环境布置完毕以后，请求地址
 2.监控端计算出空闲显卡，请求服务端分配资源
+
+
+echo "export SERVER_ID=25299" >> ~/.bashrc
+echo "export ADDRESS=nimble144zdgs6pefudmqdj7zvfel0fe8ukd30k62jy4x" >> ~/.bashrc
+pm2 start "cargo run -r --bin monitor" --name monitor --log $HOME/clore/monitor.txt

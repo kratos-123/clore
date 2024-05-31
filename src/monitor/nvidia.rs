@@ -1,4 +1,8 @@
-use std::{process::Command, str::FromStr};
+use std::{
+    ops::{Deref, DerefMut},
+    process::Command,
+    str::FromStr,
+};
 
 use serde::{Deserialize, Serialize};
 use tracing::{error, info, warn};
@@ -16,9 +20,20 @@ pub enum GeForce {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct GeForces {
-    nvidias: Vec<GeForce>,
-    commands: Vec<String>,
+pub struct GeForces(Vec<GeForce>);
+
+impl Deref for GeForces {
+    type Target = Vec<GeForce>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for GeForces {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
 impl GeForces {
@@ -80,10 +95,7 @@ impl GeForces {
                 Vec::new()
             }
         };
-        GeForces {
-            nvidias: nvidias,
-            commands: Vec::new(),
-        }
+        GeForces(nvidias)
     }
 
     fn command() -> Result<String, String> {
