@@ -77,7 +77,7 @@ impl Process {
             pm2.push(Pm2 {
                 id: pros.pm_id,
                 name: pros.name.clone(),
-                status: pros.envs.status.clone(),
+                status: pros.pm2_env.status.clone(),
             });
         }
         pm2
