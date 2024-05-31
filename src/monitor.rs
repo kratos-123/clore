@@ -3,7 +3,8 @@ use pm::Process;
 use reqwest::ClientBuilder;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::process::Command;
+use std::io::Read;
+use std::process::{Command, Stdio};
 use std::sync::Arc;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
@@ -95,11 +96,32 @@ impl Monitor {
         info!("检测后台python挖矿程序");
         //ps -aeo command |grep execute.py |grep -v grep
         let mut address = Vec::new();
-        let output = Command::new("ps")
-            .args(["-aux", "|", "grep", "execute.py", "|", "grep", "-v", "grep"])
-            .output()
-            .map_err(|e| e.to_string())?;
-        let row = String::from_utf8(output.stdout).map_err(|e| e.to_string())?;
+        let py_proc = Command::new("ps")
+            .stdin(Stdio::null())
+            .stdin(Stdio::piped())
+            .args(["-aeo", "command", "|", "grep", "-v", "grep"])
+            .spawn()
+            .map_err(|e| e.to_string())?
+            .stdout
+            .ok_or("ps命令运行失败！")?;
+        let grep_py = Command::new("grep")
+            .stdin(py_proc)
+            .stdout(Stdio::piped())
+            .args(["execute.py"])
+            .spawn()
+            .map_err(|e| e.to_string())?
+            .stdout
+            .ok_or("运行grep execute.py 失败！")?;
+        let mut grep = Command::new("grep")
+            .stdin(grep_py)
+            .stdout(Stdio::piped())
+            .args(["-v","grep"])
+            .spawn()
+            .map_err(|e| e.to_string())?
+            .stdout
+            .ok_or("运行grep -v grep 失败！")?;
+        let mut row = String::new();
+        let _ = grep.read_to_string(&mut row);
         let reg: regex::Regex = regex::Regex::new(r"(nimble[\w]+)").map_err(|e| e.to_string())?;
         for command in row.split("\n") {
             let (_, [addr]) = reg.captures(command).ok_or("无匹配值！")?.extract::<1>();
