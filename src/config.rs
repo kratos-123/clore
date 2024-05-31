@@ -16,8 +16,9 @@ lazy_static! {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Wallet {
-    pub address: Vec<String>,
+pub struct Address {
+    pub mst_address: Vec<String>,
+    pub sub_address: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -43,7 +44,7 @@ pub struct Clore {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
-    pub wallet: Wallet,
+    pub address: Address,
     pub monitor: Monitor,
     pub server: Server,
     pub clore: Clore,

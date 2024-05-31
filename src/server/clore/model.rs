@@ -320,15 +320,15 @@ pub mod resent {
 
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Resent {
-        currency: Currency,
-        image: String,
-        renting_server: u32,
+        pub currency: Currency,
+        pub image: String,
+        pub renting_server: u32,
         #[serde(rename(serialize = "type"))]
-        demand: String,
-        ports: HashMap<String, String>,
-        env: HashMap<String, String>,
-        ssh_password: String,
-        command: String,
+        pub demand: String,
+        pub ports: HashMap<String, String>,
+        pub env: HashMap<String, String>,
+        pub ssh_password: String,
+        pub command: String,
     }
 
     impl Resent {
@@ -358,17 +358,17 @@ pub mod resent {
 
     #[derive(Serialize, Deserialize, Debug)]
     pub struct ResentWeb {
-        currency: Currency,
-        image: String,
-        dockerhub_auth: String,
-        ports: HashMap<String, String>,
-        env: HashMap<String, String>,
+        pub currency: Currency,
+        pub image: String,
+        pub dockerhub_auth: String,
+        pub ports: HashMap<String, String>,
+        pub env: HashMap<String, String>,
         #[serde(rename(serialize = "type"))]
-        demand: String,
-        renting_server: u32,
-        remember_password: bool,
-        token: String,
-        command: String,
+        pub demand: String,
+        pub renting_server: u32,
+        pub remember_password: bool,
+        pub token: String,
+        pub command: String,
     }
 
     impl ResentWeb {
@@ -407,7 +407,7 @@ pub mod my_orders {
 
     use serde::{Deserialize, Serialize};
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct Order {
         #[serde(alias = "id")]
         pub order_id: u32,

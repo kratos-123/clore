@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use strum::Display;
 use tokio::io::BufReader;
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncSeekExt};
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
 use crate::monitor::LogChannel;
 
@@ -121,7 +121,7 @@ pub struct RunLog {
 #[derive(Serialize, Deserialize, Debug)]
 struct RunLogs(Vec<RunLog>);
 
-impl Deref for  RunLogs{
+impl Deref for RunLogs {
     type Target = Vec<RunLog>;
 
     fn deref(&self) -> &Self::Target {
@@ -148,7 +148,6 @@ impl std::fmt::Display for RunLogs {
         Ok(())
     }
 }
-
 
 pub async fn read_log_file(log: Log) {
     info!("监听新文件日志:{:?}", log.filename);
@@ -202,10 +201,8 @@ pub async fn read_log_file(log: Log) {
                             let captures = result.unwrap();
                             let (_, [operate, extra, percent, task, downspeed]) =
                                 captures.extract();
-                            let string = format!(
-                                "{}{} {} {} {}",
-                                operate, extra, percent, task, downspeed
-                            );
+                            let string =
+                                format!("{}{} {} {} {}", operate, extra, percent, task, downspeed);
                             hashstring.insert(format!("{}{}", operate, extra), string);
                         } else {
                             let result = bit_reg.captures(&line);
@@ -213,8 +210,7 @@ pub async fn read_log_file(log: Log) {
                                 let captures = result.unwrap();
 
                                 let (_, [percent, task, downspeed]) = captures.extract();
-                                let string =
-                                    format!("{} {} {}", percent, task, downspeed);
+                                let string = format!("{} {} {}", percent, task, downspeed);
                                 hashstring.insert("task_prcess".to_string(), string);
                             } else {
                                 let string = format!("{} {}", address, line);
@@ -228,7 +224,10 @@ pub async fn read_log_file(log: Log) {
                                 .map(|(_, item)| item.clone())
                                 .collect::<Vec<String>>()
                                 .join("\n");
-                            let message = LogChannel{ filename: address.clone(), body: body };
+                            let message = LogChannel {
+                                filename: address.clone(),
+                                body: body,
+                            };
                             let reader = Arc::clone(&LOG);
                             let reader_locked = reader.lock().await;
                             let result = reader_locked.0.send(message);
@@ -246,15 +245,11 @@ pub async fn read_log_file(log: Log) {
                 let mut buf = String::from("");
                 let _ = reader.read_to_string(&mut buf).await;
                 if !buf.is_empty() {
-                    let result = serde_json::from_str::<RunLogs>(&buf);
-                    if let Ok(logs) = result {
-                        buf = logs.to_string();
-                    } else {
-                        warn!("{:?}",result);
-                        buf = buf.replace(" ", "").replace("\n", "").replace("\r", "");
-                    }
                     if !buf.is_empty() {
-                        let message = LogChannel{ filename: address.clone(), body: buf};
+                        let message = LogChannel {
+                            filename: address.clone(),
+                            body: buf,
+                        };
                         let reader_chan = Arc::clone(&LOG);
                         let reader_chan_locked = reader_chan.lock().await;
                         let result = reader_chan_locked.0.send(message);
@@ -270,4 +265,3 @@ pub async fn read_log_file(log: Log) {
         }
     }
 }
-

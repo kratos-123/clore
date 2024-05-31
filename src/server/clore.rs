@@ -31,6 +31,7 @@ impl Default for Clore {
 
 impl Clore {
     pub async fn marketplace(&self) -> Result<Vec<Card>, String> {
+        info!("获取市场数据");
         let config::Clore { api_host, .. } = Clore::get_config().await;
         let url = format!("{}{}", api_host, "v1/marketplace");
         let text = Clore::get_client()
@@ -86,14 +87,18 @@ impl Clore {
             .replace("{server_id}", card.server_id.to_string().as_str())
             .replace("{card_number}", card.card_number.to_string().as_str())
             .replace("{address}", address.join(",").as_str());
-        let body = Resent::new(card.server_id, ssh_passwd, command);
-        info!("body:{}", serde_json::to_string(&body).unwrap());
+        let mut resent = Resent::new(card.server_id, ssh_passwd, command);
+        let env = &mut resent.env;
+        env.insert("SERVER_ID".to_string(), card.server_id.to_string());
+        env.insert("CARD_NUMBER".to_string(), card.card_number.to_string());
+        env.insert("ADDRESS".to_string(), address.join(","));
+        info!("body:{}", serde_json::to_string(&resent).unwrap());
         let mut headers: HashMap<_, _> = HashMap::new();
         headers.insert("Content-type", HeaderValue::from_str("application/json"));
         let text = Clore::get_client()
             .map_err(|e| e.to_string())?
             .post(url)
-            .json(&body)
+            .json(&resent)
             .send()
             .await
             .map_err(|e| e.to_string())?
@@ -116,7 +121,11 @@ impl Clore {
         }
     }
 
-    pub async fn create_order_web_api(card: &Card, address: Vec<String>) -> Result<(), String> {
+    pub async fn create_order_web_api(
+        &self,
+        card: &Card,
+        address: Vec<String>,
+    ) -> Result<(), String> {
         let config::Clore {
             web_api_host,
             web_token,
@@ -129,7 +138,12 @@ impl Clore {
             .replace("{server_id}", card.server_id.to_string().as_str())
             .replace("{card_number}", card.card_number.to_string().as_str())
             .replace("{address}", address.join(",").as_str());
-        let resent = ResentWeb::new(card.server_id, ssh_passwd, web_token, command.clone());
+        let mut resent = ResentWeb::new(card.server_id, ssh_passwd, web_token, command.clone());
+        let env = &mut resent.env;
+        env.insert("SERVER_ID".to_string(), card.server_id.to_string());
+        env.insert("CARD_NUMBER".to_string(), card.card_number.to_string());
+        env.insert("ADDRESS".to_string(), address.join(","));
+
         let client = Clore::get_client().map_err(|e| e.to_string())?;
         info!("command:{:?}", command.clone());
         let text = client

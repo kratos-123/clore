@@ -12,18 +12,18 @@ use tracing::warn;
 use crate::server::address::Deployed;
 use crate::server::clore::Clore;
 
-use super::clore::model::my_orders::MyOrders;
+use super::clore::model::my_orders::Order;
 
 pub struct Ssh {}
 
 impl Ssh {
     pub async fn try_run_command_remote(
-        my_orders: &MyOrders,
+        orders: &Vec<Order>,
     ) -> (HashMap<String, Deployed>, Vec<u32>) {
         let config = Clore::get_config().await;
         let mut address = HashMap::<String, Deployed>::new();
         let mut errors = Vec::new();
-        for order in (*my_orders).iter() {
+        for order in orders.iter() {
             let domain = order.get_ssh_host();
             let port = order.get_map_ssh_port();
 
@@ -37,7 +37,7 @@ impl Ssh {
             let sshport = port.unwrap();
             info!(
                 "远程测试中:server_id:{},order_id:{},{}:{}",
-                order.server_id,order.order_id, sshaddr, sshaddr
+                order.server_id, order.order_id, sshaddr, sshport
             );
             let result = Ssh::get_remote_ip(sshaddr.clone(), sshport).await;
             if result.is_ok() {
@@ -95,14 +95,15 @@ impl Ssh {
         let _ = channel.wait_close();
         if result.is_ok() {
             info!("ssh运行结果:\n{}", output);
+            let reg: regex::Regex = regex::Regex::new(r"(nimble[\w]+)").unwrap();
             for row in output.split("\n").into_iter() {
-                let mut addr = row
-                    .replace("python execute.py", "")
-                    .replace("python3 execute.py", "");
-                addr = addr.trim().to_string();
-                if !addr.is_empty() {
-                    address.push(addr);
-                }
+                if let Some(captures) = reg.captures(row) {
+                    let (_, [addr]) = captures.extract::<1>();
+                    let addr = addr.trim().to_string();
+                    if !addr.is_empty() {
+                        address.push(addr);
+                    }
+                };
             }
             info!("解析远程地址:{:?}", address);
             Ok(address)
@@ -114,7 +115,7 @@ impl Ssh {
     }
 
     pub async fn get_remote_ip(domain: String, port: u16) -> Result<SocketAddr, String> {
-        info!("域名解析中:{}{}", domain, port);
+        info!("域名解析中:{}:{}", domain, port);
         let resolver =
             TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default());
         let response = resolver

@@ -1,5 +1,0 @@
-ssh root@n3.c1.clorecloud.net -p 10610 "ps aux |grep execute.py |grep nimble* |grep -v grep"
-ssh root@n5.c1.clorecloud.net -p 10868 "ps aux |grep execute.py |grep nimble* |grep -v grep"
-ssh root@n5.c1.clorecloud.net -p 10663 "ps aux |grep execute.py |grep nimble* |grep -v grep"
-ssh root@n6.c1.clorecloud.net -p 10229 "ps aux |grep execute.py |grep nimble* |grep -v grep"
-ssh root@n3.c1.clorecloud.net -p 11175 "ps aux |grep execute.py |grep nimble* |grep -v grep"

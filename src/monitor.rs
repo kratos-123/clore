@@ -21,10 +21,10 @@ lazy_static! {
         Arc::new(Mutex::new(unbounded_channel::<LogChannel>()));
 }
 
-#[derive(Debug,Clone)]
-pub struct LogChannel{
-    filename:String,
-    body:String,
+#[derive(Debug, Clone)]
+pub struct LogChannel {
+    filename: String,
+    body: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -90,21 +90,25 @@ impl Monitor {
         }
     }
 
-    pub async fn upload(&self,body:LogChannel) {
-        let api = format!("{}/{}/{}",Monitor::get_config().await.api_report_log,self.server_id.unwrap_or_default(),body.filename);
-        info!("上报数据:\n{}",api);
+    pub async fn upload(&self, body: LogChannel) {
+        if body.body.is_empty() {
+            return;
+        }
+        let api = format!(
+            "{}/{}/{}",
+            Monitor::get_config().await.api_report_log,
+            self.server_id.unwrap_or_default(),
+            body.filename
+        );
+        info!("上报数据:\n{}\n\n{}", api, body.body);
         let client = ClientBuilder::new().build().unwrap();
-        let result = client
-            .post(api)
-            .body(body.body)
-            .send()
-            .await;
+        let result = client.post(api).body(body.body).send().await;
         if result.is_err() {
             error!("上报数据失败:{:?}", result);
         }
     }
 
-    pub async fn mining(&self, address: &str) -> Result<bool, String> {
+    pub async fn mining(&self, card_num:u32,address: &str) -> Result<bool, String> {
         //测试地址
         let dir = std::env::current_dir().unwrap().join("run.sh");
         let result = std::process::Command::new("bash")
@@ -122,7 +126,7 @@ impl Monitor {
         }
     }
 
-    pub async fn get_config()->crate::config::Monitor{
+    pub async fn get_config() -> crate::config::Monitor {
         let config = Arc::clone(&CONFIG);
         let config_locked = config.lock().await;
         (*config_locked).monitor.clone()
@@ -130,6 +134,7 @@ impl Monitor {
 }
 
 pub async fn monitor() {
+
     loop {
         let monitor = Arc::clone(&MONITOR);
         let mut monitor_locked = monitor.lock().await;
@@ -140,7 +145,7 @@ pub async fn monitor() {
         tokio::select! {
             _ = (*monitor_locked).dispatch() => {
                 // info!("{:?}",result);
-                
+
             },
             Some(log_channel) =  (*reader_locked).1.recv() => {
                 monitor_locked.upload(log_channel).await;
