@@ -20,7 +20,7 @@ pub struct Envs {
 pub struct Pros {
     pm_id: u32,
     name: String,
-    envs: Envs,
+    pm2_env: Envs,
 }
 
 pub enum Action {
