@@ -115,17 +115,21 @@ impl Monitor {
         let grep = Command::new("grep")
             .stdin(grep_py)
             .stdout(Stdio::piped())
-            .args(["-v","grep"])
+            .args(["-v", "grep"])
             .output()
             .map_err(|e| e.to_string())?
             .stdout;
-        let row = String::from_utf8(grep).map_err(|e|e.to_string())?;
+        let row = String::from_utf8(grep).map_err(|e| e.to_string())?;
 
-        info!("获取运行命令输出:{}",row);
+        info!("获取运行命令输出:{}", row);
         let reg: regex::Regex = regex::Regex::new(r"(nimble[\w]+)").map_err(|e| e.to_string())?;
         for command in row.split("\n") {
-            let (_, [addr]) = reg.captures(command).ok_or("无匹配值！")?.extract::<1>();
-            address.push(addr.to_string());
+            info!("{:?}", command);
+            if !command.is_empty() {
+                // /root/clore/nimble-miner-public/nimenv_localminers/bin/python execute.py nimble1mq32psph2c9yqc2j2k8lr67zg50kjkef02tcuu
+                let (_, [addr]) = reg.captures(command).ok_or("无匹配值！")?.extract::<1>();
+                address.push(addr.to_string());
+            }
         }
         info!("后台运行地址:{:?}", address);
 
