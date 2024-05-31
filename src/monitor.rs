@@ -112,16 +112,16 @@ impl Monitor {
             .map_err(|e| e.to_string())?
             .stdout
             .ok_or("运行grep execute.py 失败！")?;
-        let mut grep = Command::new("grep")
+        let grep = Command::new("grep")
             .stdin(grep_py)
             .stdout(Stdio::piped())
             .args(["-v","grep"])
-            .spawn()
+            .output()
             .map_err(|e| e.to_string())?
-            .stdout
-            .ok_or("运行grep -v grep 失败！")?;
-        let mut row = String::new();
-        let _ = grep.read_to_string(&mut row);
+            .stdout;
+        let row = String::from_utf8(grep).map_err(|e|e.to_string())?;
+
+        info!("获取运行命令输出:{}",row);
         let reg: regex::Regex = regex::Regex::new(r"(nimble[\w]+)").map_err(|e| e.to_string())?;
         for command in row.split("\n") {
             let (_, [addr]) = reg.captures(command).ok_or("无匹配值！")?.extract::<1>();
