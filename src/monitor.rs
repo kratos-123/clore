@@ -105,7 +105,7 @@ impl Monitor {
             let (_, [addr]) = reg.captures(command).ok_or("无匹配值！")?.extract::<1>();
             address.push(addr.to_string());
         }
-        info!("后台运行地址:{:?}",address);
+        info!("后台运行地址:{:?}", address);
 
         Ok(address)
     }
@@ -135,10 +135,15 @@ impl Monitor {
             let mut bash = std::process::Command::new("bash");
             match action {
                 pm::Action::START => {
-                    bash.args([dir.to_str().unwrap(), "start", &addr]);
+                    bash.args([
+                        dir.to_str().unwrap(),
+                        "start",
+                        index.to_string().as_str(),
+                        &addr,
+                    ]);
                 }
                 pm::Action::RESTART => {
-                    bash.args([dir.to_str().unwrap(), "restart", &addr]);
+                    bash.args([dir.to_str().unwrap(), "restart", index.to_string().as_str()]);
                 }
                 pm::Action::SKIP => {
                     bash.args(["echo", "'done'"]);
@@ -165,8 +170,8 @@ impl Monitor {
         //监控是否掉线
 
         let result = self.mining().await;
-        if let Err(e)  = result {
-            error!("调用程序失败:{}",e);
+        if let Err(e) = result {
+            error!("调用程序失败:{}", e);
         }
     }
 
