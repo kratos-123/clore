@@ -172,19 +172,19 @@ impl Monitor {
         }
         let pm2 = result.unwrap();
         for (index, addr) in address.iter().enumerate() {
-            let dir = std::env::current_dir();
-            let path = dir.unwrap().join("logs").join(format!("{}.log", addr));
-            let stdoutfile = OpenOptions::new()
-                .write(true)
-                .create(true)
-                .append(true)
-                .open(path).map_err(|e|e.to_string())?;
-            let stderrfile = stdoutfile.try_clone().map_err(|e|e.to_string())?;
+            // let dir = std::env::current_dir();
+            // let path = dir.unwrap().join("logs").join(format!("{}.log", addr));
+            // let stdoutfile = OpenOptions::new()
+            //     .write(true)
+            //     .create(true)
+            //     .append(true)
+            //     .open(path).map_err(|e|e.to_string())?;
+            // let stderrfile = stdoutfile.try_clone().map_err(|e|e.to_string())?;
             let action_name = format!("nimble{}", index);
             let action = pm2.get_action(&action_name);
             let dir = std::env::current_dir().unwrap().join("execute.sh");
             let mut bash = std::process::Command::new("bash");
-            bash.stdout(Stdio::from(stdoutfile)).stderr(Stdio::from(stderrfile));
+            // bash.stdout(Stdio::from(stdoutfile)).stderr(Stdio::from(stderrfile));
 
             match action {
                 pm::Action::START => {
