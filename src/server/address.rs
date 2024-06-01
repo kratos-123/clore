@@ -360,21 +360,24 @@ impl Address {
                                 "显卡租用中,服务器显卡数量:{},显卡型号:{},serverid:{}",
                                 card.card_number, card.card_type, card.server_id
                             );
-                            let _ = clore.create_order_web_api(card, address.clone()).await;
-                            for wallet_adress in address.iter() {
-                                let _ = self
-                                    .assgin_server(
-                                        wallet_adress,
-                                        Deployed::DEPLOYING {
-                                            orderid: 0,
-                                            serverid: card.server_id,
-                                            sshaddr: None,
-                                            sshport: None,
-                                        },
-                                    )
-                                    .await;
+                            if let Ok(_) = clore.create_order_web_api(card, address.clone()).await {
+                                for wallet_adress in address.iter() {
+                                    let _ = self
+                                        .assgin_server(
+                                            wallet_adress,
+                                            Deployed::DEPLOYING {
+                                                orderid: 0,
+                                                serverid: card.server_id,
+                                                sshaddr: None,
+                                                sshport: None,
+                                            },
+                                        )
+                                        .await;
+                                }
+                                break;
                             }
-                            break;
+
+                         
                         }
                     }
                 }
