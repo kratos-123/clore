@@ -23,7 +23,7 @@ address=$3
 case $action in
     "start" ) 
         echo "action:${action} service_name:${service_name} card_number:${card_number} address:${address}"
-        pm2 start "CUDA_VISIBLE_DEVICES=${card_number} make run addr=${address}" --name ${service_name} --log $HOME/clore/logs/${address}.txt &
+        pm2 start "CUDA_VISIBLE_DEVICES=${card_number} make run addr=${address}" --name ${service_name} --log $HOME/clore/logs/${address}.txt
         ;; 
     "restart") 
         echo "action:${action} service_name:${service_name}"

@@ -184,7 +184,7 @@ impl Monitor {
             let action = pm2.get_action(&action_name);
             let dir = std::env::current_dir().unwrap().join("execute.sh");
             let mut bash = std::process::Command::new("bash");
-            bash.stdout(std::io::stdout()).stderr(std::io::stderr());
+            bash.stdout(Stdio::null()).stderr(Stdio::null());
 
             match action {
                 pm::Action::START => {
