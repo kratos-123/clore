@@ -204,7 +204,7 @@ impl Monitor {
                     bash.args(["echo", "'done'"]);
                 }
             }
-            let _ = bash.spawn();
+            let _ = bash.spawn().map_err(|e|e.to_string())?.wait_with_output();
             info!("已重新拉起挖矿程序！");
         }
         Ok(())
