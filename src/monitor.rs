@@ -211,13 +211,13 @@ impl Monitor {
 
     pub async fn dispatch(&mut self) {
         // 日志分析
-        self.logs.iter_log_files().await;
-        for log in self.logs.iter_mut() {
-            if !log.spawn && log.filename.exists() {
-                log.spawn = true;
-                tokio::spawn(read_log_file(log.clone()));
-            }
-        }
+        // self.logs.iter_log_files().await;
+        // for log in self.logs.iter_mut() {
+        //     if !log.spawn && log.filename.exists() {
+        //         log.spawn = true;
+        //         tokio::spawn(read_log_file(log.clone()));
+        //     }
+        // }
 
         //监控是否掉线
 
