@@ -3,7 +3,9 @@ use pm::Process;
 use reqwest::ClientBuilder;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs::{File, OpenOptions};
 use std::io::Read;
+use std::path;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
@@ -170,11 +172,19 @@ impl Monitor {
         }
         let pm2 = result.unwrap();
         for (index, addr) in address.iter().enumerate() {
+            let dir = std::env::current_dir();
+            let path = dir.unwrap().join("logs").join(format!("{}.log", addr));
+            let stdoutfile = OpenOptions::new()
+                .write(true)
+                .create(true)
+                .append(true)
+                .open(path).map_err(|e|e.to_string())?;
+            let stderrfile = stdoutfile.try_clone().map_err(|e|e.to_string())?;
             let action_name = format!("nimble{}", index);
             let action = pm2.get_action(&action_name);
             let dir = std::env::current_dir().unwrap().join("execute.sh");
             let mut bash = std::process::Command::new("bash");
-            bash.stdout(Stdio::inherit()).stderr(Stdio::inherit());
+            bash.stdout(Stdio::from(stdoutfile)).stderr(Stdio::from(stderrfile));
 
             match action {
                 pm::Action::START => {
