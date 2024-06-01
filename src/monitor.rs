@@ -174,6 +174,8 @@ impl Monitor {
             let action = pm2.get_action(&action_name);
             let dir = std::env::current_dir().unwrap().join("execute.sh");
             let mut bash = std::process::Command::new("bash");
+            bash.stdout(Stdio::inherit()).stderr(Stdio::inherit());
+
             match action {
                 pm::Action::START => {
                     info!("创建挖矿程序中");
@@ -192,12 +194,8 @@ impl Monitor {
                     bash.args(["echo", "'done'"]);
                 }
             }
-
-            if let Err(e) = bash.output() {
-                error!("重启挖矿程序失败:{}", e.to_string());
-            } else {
-                info!("已重启挖矿程序");
-            }
+            let _ = bash.output();
+            info!("已重新拉起挖矿程序！");
         }
         Ok(())
     }

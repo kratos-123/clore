@@ -70,17 +70,18 @@ async fn main() {
 
         // println!("111");
         if !hashstring.is_empty() && instant.elapsed() > tokio::time::Duration::from_secs(5) {
-
-            let body = hashstring.iter().map(|(_,value)|{value.clone()}).collect::<Vec<String>>().join("\n");
-            let digest= format!("{:?}",md5::compute(body.as_bytes()));
+            let body = hashstring
+                .iter()
+                .map(|(_, value)| value.clone())
+                .collect::<Vec<String>>()
+                .join("\n");
+            let digest = format!("{:?}", md5::compute(body.as_bytes()));
             let split = "-".repeat(100);
             hashstring.insert(digest, split);
 
-            println!("{}",body);
+            println!("{}", body);
             instant = Instant::now();
             if complated.captures(&body).is_some() {
-                
-
                 continue;
             }
             // hashstring.clear();
