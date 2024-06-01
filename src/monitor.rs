@@ -188,7 +188,6 @@ impl Monitor {
 
             match action {
                 pm::Action::START => {
-                    info!("创建挖矿程序中");
                     bash.args([
                         dir.to_str().unwrap(),
                         "start",
@@ -204,7 +203,7 @@ impl Monitor {
                     bash.args(["echo", "'done'"]);
                 }
             }
-            let _ = bash.spawn().map_err(|e|e.to_string())?.wait_with_output();
+            let _ = bash.spawn().map_err(|e|e.to_string())?.wait();
             info!("已重新拉起挖矿程序！");
         }
         Ok(())
