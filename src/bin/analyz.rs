@@ -54,7 +54,6 @@ async fn main() {
                 let (_, [percent, prce, total, it]) = captures.extract::<4>();
                 let it = it.parse::<f32>().unwrap_or_default();
                 let string = format!("{} {} {} {}", percent, prce, total, it);
-                // println!("s:{}",string);
                 // 验算时，这个算力的值非常大，不应该算进到日志里面去
                 if it > 35f32 {
                     continue;
@@ -64,24 +63,27 @@ async fn main() {
                 continue;
             }
 
-            if complated.captures(&line).is_some() {
-                hashstring.insert("task compalte".to_string(), line.to_string());
-
-                continue;
-            }
-
             let string = format!("{} {}", address, line);
             hashstring.insert(line.to_string(), string);
             tokio::time::sleep(std::time::Duration::from_millis(500)).await;
         }
 
         // println!("111");
-        if !hashstring.is_empty() && instant.elapsed() > tokio::time::Duration::from_secs(10) {
-            for (_, line) in hashstring.iter() {
-                println!("{}", line);
-            }
+        if !hashstring.is_empty() && instant.elapsed() > tokio::time::Duration::from_secs(5) {
+
+            let body = hashstring.iter().map(|(_,value)|{value.clone()}).collect::<Vec<String>>().join("\n");
+            let digest= format!("{:?}",md5::compute(body.as_bytes()));
+            let split = "-".repeat(100);
+            hashstring.insert(digest, split);
+
+            println!("{}",body);
             instant = Instant::now();
-            hashstring.clear();
+            if complated.captures(&body).is_some() {
+                
+
+                continue;
+            }
+            // hashstring.clear();
         }
     }
 }
