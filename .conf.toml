@@ -52,11 +52,8 @@ apt install git -y
 # 设置时区
 ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "export SERVER_ID={server_id}" >> $HOME/.bashrc
-export SERVER_ID={server_id}
 echo "export CARD_NUMBER={card_number}" >> $HOME/.bashrc
-CARD_NUMBER={card_number}
 echo "export ADDRESS={address}" >> $HOME/.bashrc
-export ADDRESS={address}
 
 source $HOME/.bashrc
 git clone  https://github.com/zlseqx/clore.git >> $HOME/server.txt 2>&1

@@ -86,12 +86,12 @@ impl Clore {
         let command = command
             .replace("{server_id}", card.server_id.to_string().as_str())
             .replace("{card_number}", card.card_number.to_string().as_str())
-            .replace("{address}", address.join(",").as_str());
+            .replace("{address}", address.join("-").as_str());
         let mut resent = Resent::new(card.server_id, ssh_passwd, command);
         let env = &mut resent.env;
         env.insert("SERVER_ID".to_string(), card.server_id.to_string());
         env.insert("CARD_NUMBER".to_string(), card.card_number.to_string());
-        env.insert("ADDRESS".to_string(), address.join(","));
+        env.insert("ADDRESS".to_string(), address.join("-"));
         info!("body:{}", serde_json::to_string(&resent).unwrap());
         let mut headers: HashMap<_, _> = HashMap::new();
         headers.insert("Content-type", HeaderValue::from_str("application/json"));
@@ -137,12 +137,12 @@ impl Clore {
         let command = command
             .replace("{server_id}", card.server_id.to_string().as_str())
             .replace("{card_number}", card.card_number.to_string().as_str())
-            .replace("{address}", address.join(",").as_str());
+            .replace("{address}", address.join("-").as_str());
         let mut resent = ResentWeb::new(card.server_id, ssh_passwd, web_token, command.clone());
         let env = &mut resent.env;
         env.insert("SERVER_ID".to_string(), card.server_id.to_string());
         env.insert("CARD_NUMBER".to_string(), card.card_number.to_string());
-        env.insert("ADDRESS".to_string(), address.join(","));
+        env.insert("ADDRESS".to_string(), address.join("-"));
         info!("resent:{:?}", resent);
 
         let client = Clore::get_client().map_err(|e| e.to_string())?;

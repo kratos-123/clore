@@ -66,7 +66,7 @@ impl Monitor {
             .map_err(|e| e.to_string())
             .and_then(|addrs| {
                 Ok(addrs
-                    .split(",")
+                    .split("-")
                     .map(|s| s.trim().to_string())
                     .collect::<Vec<String>>())
             })
