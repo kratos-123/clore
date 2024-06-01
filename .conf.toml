@@ -49,6 +49,8 @@ command="""
 cd $HOME
 apt update -y 
 apt install git -y
+# 设置时区
+ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "export SERVER_ID={server_id}" >> $HOME/.bashrc
 echo "export CARD_NUMBER={card_number}" >> $HOME/.bashrc
 echo "export ADDRESS={address}" >> $HOME/.bashrc

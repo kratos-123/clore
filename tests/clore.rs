@@ -115,7 +115,8 @@ mod test {
         // panic!("请更改id测试！！");
         let resent_ids = [22566];
         let address = Vec::<String>::new();
-        let mut cards = Clore::default().marketplace().await.unwrap();
+        let clore = Clore::default();
+        let mut cards = clore.marketplace().await.unwrap();
         cards = cards
             .iter()
             .filter(|card| resent_ids.contains(&card.server_id))
@@ -126,7 +127,7 @@ mod test {
                 panic!("所租显卡无法进行地址分配");
             }
             let addr = address[0..(card.card_number as usize)].to_vec();
-            Clore::create_order_web_api(card, addr).await;
+            clore.create_order_web_api(card, addr).await;
         }
     }
 
@@ -151,5 +152,12 @@ mod test {
     fn append_block_server_id_test() {
         crate::common::setup();
         Clore::append_block_server_id(77777);
+    }
+
+    #[tokio::test]
+    async fn cancel_order_test() {
+        crate::common::setup();
+        let orderid = 11044;
+        Clore::default().cancel_order(orderid).await;
     }
 }

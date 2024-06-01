@@ -143,6 +143,7 @@ impl Clore {
         env.insert("SERVER_ID".to_string(), card.server_id.to_string());
         env.insert("CARD_NUMBER".to_string(), card.card_number.to_string());
         env.insert("ADDRESS".to_string(), address.join(","));
+        info!("resent:{:?}", resent);
 
         let client = Clore::get_client().map_err(|e| e.to_string())?;
         info!("command:{:?}", command.clone());
@@ -180,14 +181,24 @@ impl Clore {
         info!("my_order_text:{}", text);
         let result: Result<MyOrders, String> =
             serde_json::from_str::<MyOrders>(&text).map_err(|e| e.to_string());
-        info!("获取到订单号:{:?}", result);
+        if let Ok(my_orders) = &result {
+            info!("获取到订单号:\n{}", my_orders);
+        } else {
+            error!("获取订单失败:{:?}", result);
+        }
+
         result
     }
 
     pub async fn cancel_order(&self, order_id: u32) -> Result<(), String> {
         let config::Clore { api_host, .. } = Clore::get_config().await;
         let url = format!("{}{}", api_host, "v1/cancel_order");
-        let body = format!("\"{{\"id\":{}}}\"", order_id);
+        let body = format!("{{\"id\":\"{}\"}}", order_id);
+        info!(
+            "cancel_order body:{},{:?}",
+            body,
+            serde_json::from_str::<serde_json::Value>(&body)
+        );
         let text = Clore::get_client()
             .map_err(|e| e.to_string())?
             .post(url)
@@ -198,6 +209,7 @@ impl Clore {
             .text()
             .await
             .map_err(|e| e.to_string())?;
+        info!("cancel_order:{}", text);
         let result = serde_json::from_str::<Value>(&text).map_err(|e| e.to_string())?;
         let code = result.get("code").map_or(-1i64, |val| {
             val.as_number()

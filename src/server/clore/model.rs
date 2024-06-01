@@ -403,7 +403,10 @@ pub mod resent {
 }
 
 pub mod my_orders {
-    use std::ops::{Deref, DerefMut};
+    use std::{
+        fmt::Write,
+        ops::{Deref, DerefMut},
+    };
 
     use serde::{Deserialize, Serialize};
 
@@ -416,6 +419,24 @@ pub mod my_orders {
         pub pub_cluster: Vec<String>,
         pub tcp_ports: Vec<String>,
         pub http_port: String,
+    }
+
+    impl std::fmt::Display for Order {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let sshhost = self.get_ssh_host();
+            let sshport = self.get_map_ssh_port();
+            let ssh = if sshhost.is_some() && sshport.is_some() {
+                format!(",ssh root@{} -p {}", sshhost.unwrap(), sshport.unwrap())
+            } else {
+                "".to_string()
+            };
+            let s = format!(
+                "orderid:{},serverid:{}{}",
+                self.order_id, self.server_id, ssh
+            );
+            f.write_str(&s);
+            Ok(())
+        }
     }
 
     impl Order {
@@ -458,6 +479,14 @@ pub mod my_orders {
     pub struct MyOrders {
         code: i32,
         orders: Vec<Order>,
+    }
+    impl std::fmt::Display for MyOrders {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            for order in self.orders.iter() {
+                let _ = f.write_str(format!("{}\n", &order.to_string()).as_str());
+            }
+            Ok(())
+        }
     }
 
     impl Deref for MyOrders {

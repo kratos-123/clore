@@ -98,6 +98,20 @@ impl GeForces {
         GeForces(nvidias)
     }
 
+    pub fn get_normal_nvidias(&self) -> Vec<GeForce> {
+        let mut nvidias = Vec::<GeForce>::new();
+        for nvidia in (*self).iter() {
+            match nvidia {
+                GeForce::CARD { .. } => {
+                    nvidias.push(nvidia.clone());
+                }
+                GeForce::ERROR(_) => {}
+            }
+        }
+
+        nvidias
+    }
+
     fn command() -> Result<String, String> {
         //         let output = r"
         // GPU 0: NVIDIA GeForce RTX 4070 (UUID: GPU-5e4c623f-998d-912c-3743-3465506f63ad)

@@ -166,19 +166,19 @@ pub async fn read_log_file(log: Log) {
         .await;
     if let Ok(file) = result {
         // 任务下载
-        // (Downloading)([\w ]*:)*[\t ]+([\d]+%)\|[\S ]+\|[ ]+(\S+)[ +][\[\S]+[ ]+([\d\.\w<?]+)[ \w\/\]]+
+        // (Downloading)([\w ]*:)[\t ]+([\d\.]+\%)\|[\S ]+\|[ ]+([\d]+)\/([\d]+)[ +][\[\S]+[ ]+([\d\.]+)[\w<? \w\/\]]+
         // 生成任务和任务测试
-        // (Generating)([\w ]*:)*[\t ]+([\d]+%)\|[\S ]+\|[ ]+(\S+)[ +][\[\S]+[ ]+([\d\.\w<?]+)[ \w\/\]]+
+        // (Generating)([\w ]*:)[\t ]+([\d\.]+\%)\|[\S ]+\|[ ]+([\d]+)\/([\d]+)[ +][\[\S]+[ ]+([\d\.]+)[\w<? \w\/\]]+
         // 映射任务
-        // (Map)([\w ]*:)?[\t ]+([\d]+%)\|[\S ]+\|[ ]+(\S+)[ +][\[\S]+[ ]+([\d\.\w<?]+)[ \w\/\]]+
+        // (Map)([\w ]*:)[\t ]+([\d\.]+\%)\|[\S ]+\|[ ]+([\d]+)\/([\d]+)[ +][\[\S]+[ ]+([\d\.]+)[\w<? \w\/\]]+
         // 三合一规则
-        // (Generating|Downloading|Map)([\w ]*:)[\t ]+([\d]+%)\|[\S ]+\|[ ]+(\S+)[ +][\[\S]+[ ]+([\d\.\w<?]+)[ \w\/\]]+
+        // (Generating|Downloading|Map)([\w ]*:)[\t ]+([\d\.]+\%)\|[\S ]+\|[ ]+([\d]+)\/([\d]+)[ +][\[\S]+[ ]+([\d\.]+)[\w<? \w\/\]]+
 
         // 算力测试
         // ([\d]+%)\|[\S ]+\|[ ]+(\S+)[ +][\[\S]+[ ]+([\d\.\w<?]+)[ \w\/\]]+
 
         let complex_regex = Regex::new(
-            r"(Generating|Downloading|Map)([\w ]*:)[\t ]+([\d]+%)\|[\S ]+\|[ ]+(\S+)[ +][\[\S]+[ ]+([\d\.\w<?]+)[ \w\/\]]+",
+            r"(Generating|Downloading|Map)([\w ]*:)[\t ]+([\d\.]+\%)\|[\S ]+\|[ ]+([\d]+)\/([\d]+)[ +][\[\S]+[ ]+([\d\.]+)[\w<? \w\/\]]+",
         )
         .unwrap();
         let bit_reg =
@@ -209,8 +209,12 @@ pub async fn read_log_file(log: Log) {
                             if result.is_some() {
                                 let captures = result.unwrap();
 
-                                let (_, [percent, task, downspeed]) = captures.extract();
-                                let string = format!("{} {} {}", percent, task, downspeed);
+                                let (_, [operate, extra, percent, prce, total, downspeed]) =
+                                    captures.extract::<6>();
+                                let string = format!(
+                                    "当前操作:{}{},完成百分比:{},完成进度:{}/{} 下载速度:{}",
+                                    operate, extra, percent, prce, total, downspeed
+                                );
                                 hashstring.insert("task_prcess".to_string(), string);
                             } else {
                                 let string = format!("{} {}", address, line);

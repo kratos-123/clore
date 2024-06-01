@@ -56,7 +56,7 @@ impl Monitor {
             .and_then(|server_id| server_id.parse::<u32>().map_err(|e| e.to_string()))
             .ok();
         if server_id.is_none() {
-            error!("无法从环境变量中获取当前SERVER_ID")
+            error!("无法从环境变量中获取:SERVER_ID")
         }
         server_id
     }
@@ -74,7 +74,7 @@ impl Monitor {
         let address = match result {
             Some(addrs) => addrs,
             None => {
-                error!("无法从环境变量中获取ADDRESS");
+                error!("无法从环境变量中获取:ADDRESS");
                 Vec::new()
             }
         };
@@ -87,7 +87,7 @@ impl Monitor {
             .and_then(|card_number| card_number.parse::<u32>().map_err(|e| e.to_string()))
             .ok();
         if card_number.is_none() {
-            error!("无法从环境变量中获取当前card_number")
+            error!("无法从环境变量中获取:CARD_NUMBER")
         }
         card_number
     }
@@ -121,7 +121,7 @@ impl Monitor {
             .stdout;
         let row = String::from_utf8(grep).map_err(|e| e.to_string())?;
 
-        info!("获取运行命令输出:{}\n", row);
+        info!("检测挖矿挖矿程序,程序输出:\n{}", row);
         let reg: regex::Regex = regex::Regex::new(r"(nimble[\w]+)").map_err(|e| e.to_string())?;
         for command in row.split("\n") {
             if !command.is_empty() {
@@ -130,26 +130,42 @@ impl Monitor {
                 address.push(addr.to_string());
             }
         }
-        info!("后台运行地址:{:?}", address);
-
-        Ok(address)
+        if address.len() == 0 {
+            let massge = format!("挖矿进程已退出！");
+            error!("{}", massge);
+            Err(massge)
+        } else {
+            info!(
+                "后台运行地址数量:{}个,地址信息:{}",
+                address.len(),
+                address.join(",")
+            );
+            Ok(address)
+        }
     }
 
     // 本地监控
     pub async fn mining(&self) -> Result<(), String> {
         let address = self.address.clone();
-        let nvidias = self.nvidias.clone();
-        let process = self.py_pros().await?;
-
+        if address.len() == 0 {
+            let message = format!("无法从环境变量中获取地址信息，请检查您的环境变量");
+            return Err(message);
+        }
+        let nvidias = self.nvidias.get_normal_nvidias();
+        let py_pros = self.py_pros().await;
+        if let Err(e) = &py_pros {
+            error!("挖矿程序检测异常，正在进行拉起nimble服务");
+        }
+        let process = py_pros.unwrap_or_default();
         // 正常运行
-        if process.len() == address.len() && process.len() == (nvidias).len() {
-            info!("服务运行正常");
+        if process.len() == address.len() && process.len() == nvidias.len() {
+            info!("服务正常!!");
             return Ok(());
         }
         let result = Process::new();
         if let Err(e) = result {
-            let e = format!("初始化pm2命令失败:{}", e);
-            error!(e);
+            let e = format!("pm2运行失败:{}", e);
+            error!("{}", e);
             return Err(e);
         }
         let pm2 = result.unwrap();
@@ -160,7 +176,7 @@ impl Monitor {
             let mut bash = std::process::Command::new("bash");
             match action {
                 pm::Action::START => {
-                    info!("创建挖矿程序中...");
+                    info!("创建挖矿程序中");
                     bash.args([
                         dir.to_str().unwrap(),
                         "start",
@@ -179,7 +195,7 @@ impl Monitor {
 
             if let Err(e) = bash.output() {
                 error!("重启挖矿程序失败:{}", e.to_string());
-            }else{
+            } else {
                 info!("已重启挖矿程序");
             }
         }

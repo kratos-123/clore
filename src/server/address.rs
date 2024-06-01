@@ -88,11 +88,71 @@ impl Display for Address {
         }
         for (address, wallet) in (*self).iter() {
             if wallet.addr_type != AddressType::MASTER {
-                let row: String = format!(
-                    "addr:{},type:{},deploy:{}\n",
-                    address, wallet.addr_type, wallet.deploy
-                );
-                let _ = f.write_str(&row);
+                let row = match &wallet.deploy {
+                    Deployed::DEPLOYING {
+                        orderid,
+                        serverid,
+                        sshaddr,
+                        sshport,
+                    } => {
+                        let ssh = if sshaddr.is_some() && sshport.is_some() {
+                            format!(
+                                "\n,ssh root@{} -p {}",
+                                sshaddr.clone().unwrap(),
+                                sshport.clone().unwrap()
+                            )
+                        } else {
+                            format!("")
+                        };
+                        format!(
+                            "addr:{},type:{},deploy:{},serverid:{},orderid:{}{}\n",
+                            address, wallet.addr_type, wallet.deploy, serverid, orderid, ssh
+                        )
+                    }
+                    Deployed::DEPLOYED {
+                        orderid,
+                        serverid,
+                        sshaddr,
+                        sshport,
+                    } => {
+                        let ssh = if sshaddr.is_some() && sshport.is_some() {
+                            format!(
+                                "\n,ssh root@{} -p {}",
+                                sshaddr.clone().unwrap(),
+                                sshport.clone().unwrap()
+                            )
+                        } else {
+                            format!("")
+                        };
+                        format!(
+                            "addr:{},type:{},deploy:{},serverid:{},orderid:{}{}\n",
+                            address, wallet.addr_type, wallet.deploy, serverid, orderid, ssh
+                        )
+                    }
+                    _ => "".to_string(),
+                };
+
+                if !row.is_empty() {
+                    let _ = f.write_str(&row);
+                }
+            }
+        }
+
+        for (address, wallet) in (*self).iter() {
+            if wallet.addr_type != AddressType::MASTER {
+                let row = match &wallet.deploy {
+                    Deployed::NOTASSIGNED => {
+                        format!(
+                            "addr:{},type:{},deploy:{}\n",
+                            address, &wallet.addr_type, &wallet.deploy
+                        )
+                    }
+                    _ => "".to_string(),
+                };
+
+                if !row.is_empty() {
+                    let _ = f.write_str(&row);
+                }
             }
         }
         Ok(())
@@ -297,8 +357,8 @@ impl Address {
                             && card.card_number as usize == wallet.len()
                         {
                             info!(
-                                "显卡租用中,服务器显卡数量:{},显卡型号:{}",
-                                card.card_number, card.card_type
+                                "显卡租用中,服务器显卡数量:{},显卡型号:{},serverid:{}",
+                                card.card_number, card.card_type, card.server_id
                             );
                             let _ = clore.create_order_web_api(card, address.clone()).await;
                             for wallet_adress in address.iter() {

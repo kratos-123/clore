@@ -34,7 +34,7 @@ cd $HOME/clore
 
 # 安装rust
 if [ ! -f $HOME/.cargo/env ] ;then
-    chmod +x ./rust.sh && ./rust.sh -y
+    chmod +x ./erust.sh && ./erust.sh -y
 fi
 
 
@@ -52,17 +52,22 @@ source $HOME/.cargo/env
 cargo  build -r --bin monitor
 # 系统初始化时，会运行以下此命令
 # 下面是安装时就会自动运行
+#!/bin/bash
 # cd $HOME
 # apt update -y 
 # apt install git -y
+# # 设置时区
+# ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 # echo "export SERVER_ID={server_id}" >> $HOME/.bashrc
-# echo "export NVIDIA_CARD_NUMBER={card_number}" >> $HOME/.bashrc
+# echo "export CARD_NUMBER={card_number}" >> $HOME/.bashrc
+# echo "export ADDRESS={address}" >> $HOME/.bashrc
 # source $HOME/.bashrc
 # git clone  https://github.com/zlseqx/clore.git >> $HOME/server.txt 2>&1
 
 # cd $HOME/clore
-# chmod +x env.sh rust.sh run.sh && ./env.sh >> $HOME/server.txt 2>&1
-
+# chmod +x env.sh erust.sh execute.sh && ./env.sh >> $HOME/server.txt 2>&1
+# mkdir -p $HOME/clore/logs
+# mv $HOME/server.txt $HOME/clore/logs
 # # 防止内部被cd,需要切换到clore目录操作
 # cd $HOME/clore
 # source $HOME/.cargo/env
@@ -72,5 +77,3 @@ cargo  build -r --bin monitor
 # conda init
 # conda activate nimble
 # pm2 start "cargo run -r --bin monitor" --name monitor --log $HOME/clore/monitor.txt
-
-
