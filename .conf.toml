@@ -70,7 +70,7 @@ source $HOME/.bashrc
 # 激活pm2环境,用pm2管理cargo 监控进程
 conda init
 conda activate nimble
-cargo run -r --bin monitor --  > /dev/null 2>&1 &
+cargo run -r --bin  monitor  -- > $HOME/clore/monitor.txt 2>&1 &
 """
 
 
