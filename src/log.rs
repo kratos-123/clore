@@ -1,4 +1,5 @@
 use std::fs;
+use std::io::SeekFrom;
 use std::ops::{Deref, DerefMut};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -9,8 +10,8 @@ use regex::Regex;
 use reqwest::ClientBuilder;
 use serde::{Deserialize, Serialize};
 use strum::Display;
-use tokio::io::AsyncBufReadExt;
-use tokio::io::BufReader;
+use tokio::io::{AsyncSeekExt, BufReader};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
 use tokio::time::Instant;
@@ -143,7 +144,30 @@ impl Logs {
             return;
         }
         let file = result.unwrap();
-        let reader = BufReader::new(file);
+        let mut reader = BufReader::new(file);
+
+        if address == "my_logs" {
+            loop {
+                let mut buff = String::new();
+                let _ = reader.read_to_string(&mut buff).await;
+
+                let s: String = buff
+                    .replace(" ", "")
+                    .replace("\n", "")
+                    .replace("{", "")
+                    .replace("},", "\n")
+                    .replace("}", "")
+                    .replace("[", "")
+                    .replace("]", "")
+                    .replace("\"", "")
+                    .replace("WalletAddr:", "")
+                    .replace(",", " ");
+                println!("{} \n{}", address, s);
+                let _ = reader.seek(SeekFrom::Start(0)).await;
+                tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+            }
+            return;
+        }
         let mut hashstring = IndexMap::<String, String>::new();
         let complex_regex = Regex::new(
             r"(Generating|Downloading|Map)([\w ]*:)[\t ]+([\d\.]+\%)\|[\S ]+\|[ ]+([\d]+)\/([\d]+)[ +][\[\S]+[ ]+([\d\.]+)[\w<? \w\/\]]+",
@@ -162,10 +186,7 @@ impl Logs {
         let mut lines = reader.lines();
         while let Ok(some_line) = lines.next_line().await {
             if let Some(line) = some_line {
-                let mut line = line.trim().to_string();
-                if address == "my_logs" {
-                    line = line.replace("{", "").replace("}", "").replace("\"", "").replace(",", "");
-                }
+                let line = line.trim().to_string();
                 if line.is_empty() {
                     continue;
                 }
@@ -179,7 +200,7 @@ impl Logs {
                         captures.extract::<6>();
                     let string = format!(
                         "{} 当前操作:{}{},完成百分比:{},完成进度:{}/{} 下载速度:{}",
-                        address,operate, extra, percent, prce, total, downspeed
+                        address, operate, extra, percent, prce, total, downspeed
                     );
                     hashstring.insert(format!("{}{}", operate, extra), string);
                     continue;
@@ -190,7 +211,10 @@ impl Logs {
                     let captures = bittest.unwrap();
                     let (_, [percent, prce, total, it]) = captures.extract::<4>();
                     let it = it.parse::<f32>().unwrap_or_default();
-                    let string = format!("{} 正在任务 完成百分比:{} 完成进度:{}/{} 当前算力:{}it", address,percent, prce, total, it);
+                    let string = format!(
+                        "{} 正在任务 完成百分比:{:<3} 完成进度:{:<5}/{:<5} 当前算力:{}it",
+                        address, percent, prce, total, it
+                    );
                     // 验算时，这个算力的值非常大，不应该算进到日志里面去
                     if it > 35f32 {
                         continue;
@@ -220,7 +244,6 @@ impl Logs {
                 if complated.captures(&body).is_some() {
                     continue;
                 }
-     
             }
         }
     }
@@ -238,9 +261,13 @@ impl Logs {
                 }
             }
             drop(log_files_locked);
-            tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
         }
     }
+}
+
+pub fn my_logs() {
+    // OpenOptions::new().
 }
 
 #[derive(Serialize, Deserialize, Debug, Display)]
