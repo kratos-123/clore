@@ -12,13 +12,16 @@ addr:nimble1t4na8cxqd46cqd7jdrenp2fxrynf02d6jcsnm0,type:SUB,deploy:DEPLOYED,serv
 addr:nimble1lk30akmnnr6zpfarm2vvg9l3q0rakagqyhh5ap,type:SUB,deploy:NOTASSIGNED
 addr:nimble1tnk0guqhp6m9yrptcwnk6sgn9chm53dmv3tqrv,type:SUB,deploy:NOTASSIGNED
 
+orderid:250787,serverid:22502,ssh root@n3.c1.clorecloud.net -p 11100
 orderid:249838,serverid:21248,ssh root@n6.c1.clorecloud.net -p 10528
 orderid:249140,serverid:24335,ssh root@n3.c1.clorecloud.net -p 11044
 orderid:244945,serverid:22566,ssh root@n5.c1.clorecloud.net -p 10009
 orderid:240759,serverid:25299,ssh root@n5.c1.clorecloud.net -p 10868
 
+ssh root@5.188.33.88
 MTcxNjMwNDc2N19ZempBSW
 ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+https://github.com/victor-vb/clore.git
 
 echo "export SERVER_ID=25299" >> ~/.bashrc
 echo "export ADDRESS=nimble144zdgs6pefudmqdj7zvfel0fe8ukd30k62jy4x" >> ~/.bashrc
