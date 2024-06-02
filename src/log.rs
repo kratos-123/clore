@@ -187,7 +187,7 @@ impl Logs {
                     let captures = bittest.unwrap();
                     let (_, [percent, prce, total, it]) = captures.extract::<4>();
                     let it = it.parse::<f32>().unwrap_or_default();
-                    let string = format!("{} {} {} {}", percent, prce, total, it);
+                    let string = format!("正在任务:{} 完成百分比:{} 完成进度:{}/{} 当前算力:{}it", address,percent, prce, total, it);
                     // 验算时，这个算力的值非常大，不应该算进到日志里面去
                     if it > 35f32 {
                         continue;
