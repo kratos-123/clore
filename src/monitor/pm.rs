@@ -2,7 +2,7 @@ use std::ops::{Deref, DerefMut};
 
 use serde::{Deserialize, Serialize};
 use std::process::Command;
-use tracing::{error, info};
+use tracing::info;
 
 #[allow(dead_code)]
 pub struct Pm2 {

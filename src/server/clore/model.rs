@@ -403,10 +403,7 @@ pub mod resent {
 }
 
 pub mod my_orders {
-    use std::{
-        fmt::Write,
-        ops::{Deref, DerefMut},
-    };
+    use std::ops::{Deref, DerefMut};
 
     use serde::{Deserialize, Serialize};
 
@@ -434,7 +431,7 @@ pub mod my_orders {
                 "orderid:{},serverid:{}{}",
                 self.order_id, self.server_id, ssh
             );
-            f.write_str(&s);
+            let _ = f.write_str(&s);
             Ok(())
         }
     }
