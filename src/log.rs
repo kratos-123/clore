@@ -213,10 +213,11 @@ impl Logs {
 
                 println!("{}", body);
                 instant = Instant::now();
+                hashstring.clear();
                 if complated.captures(&body).is_some() {
                     continue;
                 }
-                // hashstring.clear();
+     
             }
         }
     }
