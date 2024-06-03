@@ -169,7 +169,7 @@ impl Logs {
                     .map(|row| {
                         let row = row.replace("WalletAddr:", "").trim().to_string();
                         total += 2;
-                        total_task +=1;
+                        total_task += 1;
                         if row.find("Success").is_some() {
                             total_task_succss += 1;
                         }
@@ -232,17 +232,20 @@ impl Logs {
                     let captures = bittest.unwrap();
                     let (_, [percent, prce, total, it]) = captures.extract::<4>();
                     let it = it.parse::<f32>().unwrap_or_default();
-                    let string = format!(
-                        "{} 正在任务 完成百分比:{:<3} 完成进度:{:<5}/{:<5} 当前算力:{}it",
-                        address, percent, prce, total, it
-                    );
+                    let mut string = String::new();
                     // 验算时，这个算力的值非常大，不应该算进到日志里面去
                     if it > 35f32 {
-                        continue;
+                        string = format!(
+                            "{} 算力核算 完成百分比:{:<3} 完成进度:{:<5}/{:<5} 当前算力:{}it",
+                            address, percent, prce, total, it
+                        );
+                    } else {
+                        string = format!(
+                            "{} 正在任务 完成百分比:{:<3} 完成进度:{:<5}/{:<5} 当前算力:{}it",
+                            address, percent, prce, total, it
+                        );
                     }
-
-                    hashstring.insert("task_prcess".to_string(), string);
-                    continue;
+                    hashstring.insert("verify_it".to_string(), string);
                 }
 
                 let string = format!("{} {}", address, line);

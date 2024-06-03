@@ -24,6 +24,7 @@ ssh root@5.188.33.88
 ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 https://github.com/victor-vb/clore.git
 MTcxNjMwNDc2N19ZempBSW
+echo "export CARD_NUMBER=1" >> ~/.bashrc
 echo "export SERVER_ID=25299" >> ~/.bashrc
 echo "export ADDRESS=nimble144zdgs6pefudmqdj7zvfel0fe8ukd30k62jy4x" >> ~/.bashrc
 cargo run -r --bin monitor -- >> $HOME/clore/monitor.txt 2>&1 &
