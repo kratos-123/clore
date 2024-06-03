@@ -188,7 +188,6 @@ impl Logs {
                 let _ = reader.seek(SeekFrom::Start(0)).await;
                 tokio::time::sleep(std::time::Duration::from_secs(60)).await;
             }
-            return;
         }
         let mut hashstring = IndexMap::<String, String>::new();
         let complex_regex = Regex::new(
