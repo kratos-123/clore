@@ -246,6 +246,7 @@ impl Logs {
                         );
                     }
                     hashstring.insert("verify_it".to_string(), string);
+                    continue;
                 }
 
                 let string = format!("{} {}", address, line);
