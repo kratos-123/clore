@@ -10,8 +10,8 @@ use regex::Regex;
 use reqwest::ClientBuilder;
 use serde::{Deserialize, Serialize};
 use strum::Display;
-use tokio::io::{AsyncSeekExt, BufReader};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt};
+use tokio::io::{AsyncSeekExt, BufReader};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
 use tokio::time::Instant;
@@ -148,11 +148,15 @@ impl Logs {
 
         if address == "my_logs" {
             loop {
+                let cards = Monitor::get_card_number().await.unwrap_or(1);
+                let mut total = 0;
+                let mut total_task = 0;
+                let mut total_task_succss = 0;
                 let mut buff = String::new();
                 let _ = reader.read_to_string(&mut buff).await;
 
                 let s: String = buff
-                    .replace(" ", "")
+                    .replace("  ", "")
                     .replace("\n", "")
                     .replace("{", "")
                     .replace("},", "\n")
@@ -160,9 +164,27 @@ impl Logs {
                     .replace("[", "")
                     .replace("]", "")
                     .replace("\"", "")
-                    .replace("WalletAddr:", "")
-                    .replace(",", " ");
-                println!("{} \n{}", address, s);
+                    .replace(",", " ")
+                    .split("\n")
+                    .map(|row| {
+                        let row = row.replace("WalletAddr:", "").trim().to_string();
+                        total += 2;
+                        total_task +=1;
+                        if row.find("Success").is_some() {
+                            total_task_succss += 1;
+                        }
+                        // row.split(",").map(|s|{
+                        //     s.trim().to_string().split(":").map(|item|{
+                        //         let [key,value] = item.trim();
+                        //     })
+                        // });
+                        row
+                    })
+                    .collect::<Vec<String>>()
+                    .join("\n");
+                println!(
+                    "{} \n{} \n总任务数:{},成功任务数:{},失败任务数:{},合计奖励:{} $NIM,单地址合集奖励:{:.3} $NIM", 
+                    address, s.trim(),total_task,total_task_succss,total_task-total_task_succss,total,total/cards);
                 let _ = reader.seek(SeekFrom::Start(0)).await;
                 tokio::time::sleep(std::time::Duration::from_secs(60)).await;
             }
