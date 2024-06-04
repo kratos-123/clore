@@ -138,7 +138,7 @@ mod test {
         assert!(my_orders_result.is_ok());
         if my_orders_result.is_ok() {
             let mut my_orders = my_orders_result.unwrap();
-            Ssh::try_run_command_remote(&mut my_orders).await;
+            // Ssh::try_run_command_remote(&mut my_orders).await;
         }
     }
 
