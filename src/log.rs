@@ -232,6 +232,7 @@ impl Logs {
                     let captures = bittest.unwrap();
                     let (_, [percent, prce, total, it]) = captures.extract::<4>();
                     let it = it.parse::<f32>().unwrap_or_default();
+                    #[allow(unused_assignments)]
                     let mut string = String::new();
                     // 验算时，这个算力的值非常大，不应该算进到日志里面去
                     if it > 35f32 {

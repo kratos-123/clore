@@ -405,7 +405,12 @@ pub mod resent {
 pub mod my_orders {
     use std::ops::{Deref, DerefMut};
 
+    use chrono::{DateTime, FixedOffset, Utc};
     use serde::{Deserialize, Serialize};
+
+    fn online() -> bool {
+        false
+    }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct Order {
@@ -413,6 +418,13 @@ pub mod my_orders {
         pub order_id: u32,
         #[serde(alias = "si")]
         pub server_id: u32,
+        #[serde(alias = "mrl")]
+        pub duration:u32,
+        #[serde(default = "online")]
+        pub online: bool,
+        #[serde(alias = "ct")]
+        pub create_time: i64,
+        pub price:f64,
         pub pub_cluster: Vec<String>,
         pub tcp_ports: Vec<String>,
         pub http_port: String,
@@ -422,14 +434,18 @@ pub mod my_orders {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             let sshhost = self.get_ssh_host();
             let sshport = self.get_map_ssh_port();
+            let create_time = DateTime::from_timestamp(self.create_time, 0)
+                .unwrap()
+                .with_timezone(&FixedOffset::east_opt(8 * 3600).unwrap());
+            let fmt = create_time.format("%Y-%m-%d %H:%M:%S").to_string();
             let ssh = if sshhost.is_some() && sshport.is_some() {
                 format!(",ssh root@{} -p {}", sshhost.unwrap(), sshport.unwrap())
             } else {
                 "".to_string()
             };
             let s = format!(
-                "orderid:{},serverid:{}{}",
-                self.order_id, self.server_id, ssh
+                "orderid:{},serverid:{},是否在线:{},创建时间:{},可用时长:{:3}H,价格:{}/天{}",
+                self.order_id, self.server_id, self.online, fmt, self.duration/3600,self.price,ssh
             );
             let _ = f.write_str(&s);
             Ok(())
