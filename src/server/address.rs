@@ -347,14 +347,17 @@ impl Address {
             let markets = clore.marketplace().await;
             let wallets = wallets.as_slice().chunks(2);
             for wallet in wallets {
+                info!("需要租用卡:{:?},len:{}",wallet,wallet.len());
                 let address = wallet
                     .iter()
                     .map(|item| item.address.clone())
                     .collect::<Vec<String>>();
                 if let Ok(cards) = &markets {
+                  
                     for card in cards.iter() {
+                        info!("len:{}",card.card_number);
                         if card.card_type == CardType::NVIDIA4090
-                            && card.card_number as usize == wallet.len()
+                            && (card.card_number as usize) == wallet.len()
                         {
                             info!(
                                 "显卡租用中,服务器显卡数量:{},显卡型号:{},serverid:{}",
@@ -374,6 +377,7 @@ impl Address {
                                         )
                                         .await;
                                 }
+                                break;
                             }
                         }
                     }

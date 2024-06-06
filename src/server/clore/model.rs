@@ -155,7 +155,7 @@ pub mod market {
                     let machine_properties = &item.specs;
                     let gpu = &machine_properties.gpu;
                     regex.is_match(&gpu)
-                        && item.rating.get("avg").unwrap_or(&0f32) > &3.5f32
+                        && item.rating.get("avg").unwrap_or(&0f32) > &3f32
                         && item.allowed_coins.contains(&"CLORE-Blockchain".to_string())
                         && !item.rented
                         && item.mrl > 72
@@ -230,7 +230,7 @@ pub mod market {
                             warn!("未知显卡:{:?}", item.card_type);
                             false
                         }
-                        _ if total_max_price > item.avg_price_demand => true,
+                        _ if total_max_price > item.avg_price_demand && item.card_type == CardType::NVIDIA4090=> true,
                         _ => false,
                     }
                 })
