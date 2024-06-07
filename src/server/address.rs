@@ -348,7 +348,7 @@ impl Address {
         if wallets.len() > 0 {
             let clore = Clore::default();
             let markets = clore.marketplace().await;
-            let wallets = wallets.as_slice().chunks(2);
+            let wallets = wallets.as_slice().chunks(1);
             for wallet in wallets {
                 info!("需要租用卡:{:?},len:{}",wallet,wallet.len());
                 let address = wallet

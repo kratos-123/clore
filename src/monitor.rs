@@ -157,11 +157,12 @@ impl Monitor {
         for (index, addr) in address.iter().enumerate() {
             let action_name = format!("nimble{}", index);
             let action = pm2.get_action(&action_name);
+            let _ = self.pm2(action, index, addr.clone()).await;
         }
         Ok(())
     }
 
-    async fn pm2(&self, action: pm::Action, index: u32, address: String) -> Result<(), String> {
+    async fn pm2(&self, action: pm::Action, index: usize, address: String) -> Result<(), String> {
         let dir = std::env::current_dir().unwrap().join("execute.sh");
         let mut bash = std::process::Command::new("bash");
         bash.stdout(Stdio::null()).stderr(Stdio::null());

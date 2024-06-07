@@ -26,7 +26,7 @@ pub enum CardType {
 impl CardType {
     pub fn get_max_price(&self, card_number: f64) -> f64 {
         let price = match self {
-            CardType::NVIDIA4090 => 32f64,
+            CardType::NVIDIA4090 => 30f64,
             CardType::NVIDIA4080S => 24f64,
             CardType::NVIDIA4080 => 20f64,
             CardType::NVIDIA4070S => 32f64,

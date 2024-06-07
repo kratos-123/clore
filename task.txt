@@ -19,3 +19,7 @@ echo "export CARD_NUMBER=1" >> ~/.bashrc
 echo "export SERVER_ID=25299" >> ~/.bashrc
 echo "export ADDRESS=nimble1tnk0guqhp6m9yrptcwnk6sgn9chm53dmv3tqrv" >> ~/.bashrc
 cargo run -r --bin monitor -- >> $HOME/clore/monitor.txt 2>&1 &
+
+
+https://clore.ai/webapi/marketplace/cancel_order
+{"id":259129,"rating":3,"token":"MTcxNjY1NDA2N19XeElVS0dJR2dpMGF4cDJzbmtOeDNWOUVyczg3amQ="}
