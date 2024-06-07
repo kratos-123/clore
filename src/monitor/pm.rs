@@ -1,4 +1,8 @@
-use std::ops::{Deref, DerefMut};
+use std::{
+    ops::{Deref, DerefMut},
+    path::PathBuf,
+    str::FromStr,
+};
 
 use serde::{Deserialize, Serialize};
 use std::process::Command;
@@ -9,11 +13,13 @@ pub struct Pm2 {
     id: u32,
     name: String,
     status: String,
+    address: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Envs {
     status: String,
+    pm_log_path: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -74,10 +80,13 @@ impl Process {
     pub fn to_pm2(&self) -> Vec<Pm2> {
         let mut pm2 = Vec::<Pm2>::new();
         for pros in (*self).iter() {
+            let path = PathBuf::from_str(&pros.pm2_env.pm_log_path).unwrap();
+            let address = path.file_stem().unwrap().to_string_lossy().to_string();
             pm2.push(Pm2 {
                 id: pros.pm_id,
                 name: pros.name.clone(),
                 status: pros.pm2_env.status.clone(),
+                address: address,
             });
         }
         pm2

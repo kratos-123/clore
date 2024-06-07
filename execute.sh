@@ -27,7 +27,7 @@ case $action in
         ;; 
     "restart") 
         echo "action:${action} service_name:${service_name}"
-        pm2 start ${service_name} &
+        pm2 restart ${service_name} 
         ;; 
     * ) 
         echo "useage:bash execute.sh <restart|start> <service_name> <card_num> <addres>";

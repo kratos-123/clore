@@ -217,7 +217,10 @@ impl Address {
         info!("网络请求:{},{}", url, address);
         let mut params = HashMap::new();
         params.insert("address", address);
-        let client = reqwest::Client::new();
+        let client = reqwest::ClientBuilder::new()
+            .timeout(std::time::Duration::from_secs(10))
+            .build()
+            .map_err(|e| e.to_string())?;
         let result = client
             .post(url)
             .json(&params)
@@ -273,7 +276,7 @@ impl Address {
     }
 
     /// 获取没有分配的挖矿地址
-    pub async fn get_unusd_wallet(&mut self) -> Vec<Wallet> {
+    pub async fn get_unused_wallet(&mut self) -> Vec<Wallet> {
         let mut wallets: Vec<Wallet> = Vec::new();
         let result = Clore::default().my_orders().await;
 
@@ -347,15 +350,14 @@ impl Address {
             let markets = clore.marketplace().await;
             let wallets = wallets.as_slice().chunks(2);
             for wallet in wallets {
-                info!("需要租用卡:{:?},len:{}",wallet,wallet.len());
+                info!("需要租用卡:{:?},len:{}", wallet, wallet.len());
                 let address = wallet
                     .iter()
                     .map(|item| item.address.clone())
                     .collect::<Vec<String>>();
                 if let Ok(cards) = &markets {
-                  
                     for card in cards.iter() {
-                        info!("len:{}",card.card_number);
+                        info!("len:{}", card.card_number);
                         if card.card_type == CardType::NVIDIA4090
                             && (card.card_number as usize) == wallet.len()
                         {
@@ -476,7 +478,7 @@ pub async fn pool() {
         let mut locked = wallets.lock().await;
         let other = Address::default().load_address_file().await;
         locked.check(&other).await;
-        let wallets = locked.get_unusd_wallet().await;
+        let wallets = locked.get_unused_wallet().await;
         info!("当前绑定信息:{}", *locked);
         locked.resent_server(wallets).await;
 
