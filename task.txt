@@ -4,19 +4,10 @@
 2.监控端计算出空闲显卡，请求服务端分配资源
 
 
-addr:nimble144zdgs6pefudmqdj7zvfel0fe8ukd30k62jy4x,type:SUB,deploy:DEPLOYED,serverid:16296,orderid:243781,
-addr:nimble1a67mj08trt4sxd4erhzrzgqnufma0h0khtdya3,type:SUB,deploy:DEPLOYED,serverid:22566,orderid:244945,
-addr:nimble1fg04yu5pk0yqvvm6jq8gtg8qa8we3wf24q34t8,type:SUB,deploy:DEPLOYED,serverid:25835,orderid:247907,
-addr:nimble1mq32psph2c9yqc2j2k8lr67zg50kjkef02tcuu,type:SUB,deploy:DEPLOYED,serverid:25299,orderid:240759,
-addr:nimble1t4na8cxqd46cqd7jdrenp2fxrynf02d6jcsnm0,type:SUB,deploy:DEPLOYED,serverid:22566,orderid:244945,
-addr:nimble1lk30akmnnr6zpfarm2vvg9l3q0rakagqyhh5ap,type:SUB,deploy:NOTASSIGNED
-addr:nimble1tnk0guqhp6m9yrptcwnk6sgn9chm53dmv3tqrv,type:SUB,deploy:NOTASSIGNED
-
-orderid:252798,serverid:25835,ssh root@n6.c1.clorecloud.net -p 10015
-orderid:252720,serverid:22565,ssh root@n6.c1.clorecloud.net -p 10383
-orderid:250787,serverid:22502,ssh root@n3.c1.clorecloud.net -p 11100
-orderid:244945,serverid:22566,ssh root@n5.c1.clorecloud.net -p 10009
-orderid:240759,serverid:25299,ssh root@n5.c1.clorecloud.net -p 10868
+ssh root@n6.c1.clorecloud.net -p 10280
+ssh root@n4.c1.clorecloud.net -p 10021
+ssh root@n4.c1.clorecloud.net -p 10138
+ssh root@n3.c1.clorecloud.net -p 10287
 
 ssh root@n5.c1.clorecloud.net -p 10868 "ps -aeo command |grep 'execute|monitor' |grep -v grep"
 ssh root@5.188.33.88
@@ -24,7 +15,7 @@ ssh root@5.188.33.88
 ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 https://github.com/victor-vb/clore.git
 MTcxNjMwNDc2N19ZempBSW
-echo "export CARD_NUMBER=2" >> ~/.bashrc
+echo "export CARD_NUMBER=1" >> ~/.bashrc
 echo "export SERVER_ID=25299" >> ~/.bashrc
-echo "export ADDRESS=nimble144zdgs6pefudmqdj7zvfel0fe8ukd30k62jy4x" >> ~/.bashrc
+echo "export ADDRESS=nimble1tnk0guqhp6m9yrptcwnk6sgn9chm53dmv3tqrv" >> ~/.bashrc
 cargo run -r --bin monitor -- >> $HOME/clore/monitor.txt 2>&1 &

@@ -231,6 +231,8 @@ pub mod market {
                             false
                         }
                         _ if total_max_price > item.avg_price_demand && item.card_type == CardType::NVIDIA4090=> true,
+
+
                         _ => false,
                     }
                 })
@@ -419,12 +421,12 @@ pub mod my_orders {
         #[serde(alias = "si")]
         pub server_id: u32,
         #[serde(alias = "mrl")]
-        pub duration:u32,
+        pub duration: u32,
         #[serde(default = "online")]
         pub online: bool,
         #[serde(alias = "ct")]
         pub create_time: i64,
-        pub price:f64,
+        pub price: f64,
         pub pub_cluster: Vec<String>,
         pub tcp_ports: Vec<String>,
         pub http_port: String,
@@ -445,7 +447,13 @@ pub mod my_orders {
             };
             let s = format!(
                 "orderid:{},serverid:{},是否在线:{},创建时间:{},可用时长:{:3}H,价格:{}/天{}",
-                self.order_id, self.server_id, self.online, fmt, self.duration/3600,self.price,ssh
+                self.order_id,
+                self.server_id,
+                self.online,
+                fmt,
+                self.duration / 3600,
+                self.price,
+                ssh
             );
             let _ = f.write_str(&s);
             Ok(())

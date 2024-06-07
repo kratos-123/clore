@@ -5,10 +5,11 @@ use std::collections::HashMap;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 use self::nvidia::GeForces;
 use crate::config::CONFIG;
+use crate::log::{self, LOG_CHANNEL};
 
 pub mod nvidia;
 pub mod pm;
@@ -154,40 +155,36 @@ impl Monitor {
         }
         let pm2 = result.unwrap();
         for (index, addr) in address.iter().enumerate() {
-            // let dir = std::env::current_dir();
-            // let path = dir.unwrap().join("logs").join(format!("{}.log", addr));
-            // let stdoutfile = OpenOptions::new()
-            //     .write(true)
-            //     .create(true)
-            //     .append(true)
-            //     .open(path).map_err(|e|e.to_string())?;
-            // let stderrfile = stdoutfile.try_clone().map_err(|e|e.to_string())?;
             let action_name = format!("nimble{}", index);
             let action = pm2.get_action(&action_name);
-            let dir = std::env::current_dir().unwrap().join("execute.sh");
-            let mut bash = std::process::Command::new("bash");
-            bash.stdout(Stdio::null()).stderr(Stdio::null());
-
-            match action {
-                pm::Action::START => {
-                    bash.args([
-                        dir.to_str().unwrap(),
-                        "start",
-                        index.to_string().as_str(),
-                        &addr,
-                    ]);
-                }
-                pm::Action::RESTART => {
-                    info!("正在重启挖矿程序!");
-                    bash.args([dir.to_str().unwrap(), "restart", index.to_string().as_str()]);
-                }
-                pm::Action::SKIP => {
-                    bash.args(["echo", "'done'"]);
-                }
-            }
-            let _ = bash.spawn().map_err(|e| e.to_string())?.wait();
-            info!("已重新拉起挖矿程序！");
         }
+        Ok(())
+    }
+
+    async fn pm2(&self, action: pm::Action, index: u32, address: String) -> Result<(), String> {
+        let dir = std::env::current_dir().unwrap().join("execute.sh");
+        let mut bash = std::process::Command::new("bash");
+        bash.stdout(Stdio::null()).stderr(Stdio::null());
+
+        match action {
+            pm::Action::START => {
+                bash.args([
+                    dir.to_str().unwrap(),
+                    "start",
+                    index.to_string().as_str(),
+                    &address,
+                ]);
+            }
+            pm::Action::RESTART => {
+                info!("正在重启挖矿程序!");
+                bash.args([dir.to_str().unwrap(), "restart", index.to_string().as_str()]);
+            }
+            pm::Action::SKIP => {
+                bash.args(["echo", "'done'"]);
+            }
+        }
+        let _ = bash.spawn().map_err(|e| e.to_string())?.wait();
+        info!("已重新拉起挖矿程序！");
         Ok(())
     }
 
@@ -208,10 +205,27 @@ impl Monitor {
 }
 
 pub async fn monitor() {
+    // tokio::spawn(log::Logs::monitor());
+
     loop {
         let monitor = Arc::clone(&MONITOR);
         let mut monitor_locked = monitor.lock().await;
-        // info!("{:?}", *monitor_locked);
+        let log_channel = Arc::clone(&LOG_CHANNEL);
+        let mut log_channel_locked = log_channel.lock().await;
+
+        tokio::select! {
+            _ = (*monitor_locked).dispatch() => {
+
+            },
+            Some(msg) = (*log_channel_locked).1.recv() =>{
+                match msg.msg_type {
+                    log::MsgType::RESTART => {
+                        warn!("需要重启:{:?}",msg);
+                    },
+                    _=>{}
+                }
+            }
+        }
 
         (*monitor_locked).dispatch().await;
         drop(monitor_locked);

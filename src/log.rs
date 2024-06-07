@@ -15,20 +15,28 @@ use tokio::io::{AsyncSeekExt, BufReader};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
 use tokio::time::Instant;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 use crate::monitor::Monitor;
 
 lazy_static! {
-    pub static ref LOG_CHANNEL: Arc<Mutex<(UnboundedSender<LogChannel>, UnboundedReceiver<LogChannel>)>> =
-        Arc::new(Mutex::new(unbounded_channel::<LogChannel>()));
+    pub static ref LOG_CHANNEL: Arc<Mutex<(UnboundedSender<Massage>, UnboundedReceiver<Massage>)>> =
+        Arc::new(Mutex::new(unbounded_channel::<Massage>()));
     pub static ref LOG_FILES: Arc<Mutex<Logs>> = Arc::new(Mutex::new(Logs::new()));
 }
 
 #[derive(Debug, Clone)]
-pub struct LogChannel {
-    filename: String,
-    body: String,
+pub enum MsgType {
+    NORMAL,
+    RESTART,
+    REPORT,
+}
+
+#[derive(Debug, Clone)]
+pub struct Massage {
+    pub address: String,
+    pub msg_type: MsgType,
+    pub body: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,19 +64,19 @@ impl Logs {
         logs
     }
 
-    pub async fn upload(body: LogChannel) {
-        if body.body.is_empty() {
+    pub async fn upload(mesage: Massage) {
+        if mesage.body.is_empty() {
             return;
         }
         let api = format!(
             "{}/{}/{}",
             Monitor::get_config().await.api_report_log,
             Monitor::get_server_id().unwrap_or_default(),
-            body.filename
+            mesage.address
         );
-        info!("上报数据:\n{}\n\n{}", api, body.body);
+        info!("上报数据:\n{}\n\n{}", api, mesage.body);
         let client = ClientBuilder::new().build().unwrap();
-        let result = client.post(api).body(body.body).send().await;
+        let result = client.post(api).body(mesage.body).send().await;
         if result.is_err() {
             error!("上报数据失败:{:?}", result);
         }
@@ -184,17 +192,23 @@ impl Logs {
                     .join("\n");
                 println!(
                     "{} \n{} \n总任务数:{},成功任务数:{},失败任务数:{},合计奖励:{} $NIM,单地址合集奖励:{:.3} $NIM", 
-                    address, s.trim(),total_task,total_task_succss,total_task-total_task_succss,total,total/cards);
+                    address, s.trim(),total_task,total_task_succss,total_task-total_task_succss,total,total_task_succss/cards);
                 let _ = reader.seek(SeekFrom::Start(0)).await;
                 tokio::time::sleep(std::time::Duration::from_secs(60)).await;
             }
         }
         let mut hashstring = IndexMap::<String, String>::new();
+
+        //拉取任务失败
+        let request_task = Regex::new(r"Failed to init particle").unwrap();
+
+        //第一次启动需要下载相关任务
         let complex_regex = Regex::new(
             r"(Generating|Downloading|Map)([\w ]*:)[\t ]+([\d\.]+\%)\|[\S ]+\|[ ]+([\d]+)\/([\d]+)[ +][\[\S]+[ ]+([\d\.]+)[\w<? \w\/\]]+",
         )
         .unwrap();
 
+        //获取显卡算力
         let bit_reg = Regex::new(
             r"([\d]+%)\|[\S ]+\|[ ]+([\d]+)\/([\d]+)[ +][\[\S]+[ ]+([\d\.]+)[ \w\/\]<?]+",
         )
@@ -202,7 +216,9 @@ impl Logs {
 
         let verify = Regex::new(r"\{'(loss|eval_loss).*}").unwrap();
 
+        // 任务完成时输出
         let complated = Regex::new(r"completed the task.*").unwrap();
+
         let mut instant = tokio::time::Instant::now();
         let mut lines = reader.lines();
         while let Ok(some_line) = lines.next_line().await {
@@ -234,19 +250,37 @@ impl Logs {
                     let it = it.parse::<f32>().unwrap_or_default();
                     #[allow(unused_assignments)]
                     let mut string = String::new();
-                    // 验算时，这个算力的值非常大，不应该算进到日志里面去
-                    if it > 35f32 {
-                        string = format!(
-                            "{} 算力核算 完成百分比:{:<3} 完成进度:{:<5}/{:<5} 当前算力:{}it",
-                            address, percent, prce, total, it
-                        );
-                    } else {
-                        string = format!(
-                            "{} 正在任务 完成百分比:{:<3} 完成进度:{:<5}/{:<5} 当前算力:{}it",
-                            address, percent, prce, total, it
-                        );
+                    match it {
+                        it if it > 20f32 => {
+                            // 验算时，这个算力的值非常大，不应该算进到日志里面去
+                            string = format!(
+                                "{} 算力核算 完成百分比:{:<3} 完成进度:{:<5}/{:<5} 当前算力:{}it",
+                                address, percent, prce, total, it
+                            );
+                            hashstring.insert("verify_it".to_string(), string);
+                        }
+                        it if it < 11f32 => {
+                            string = format!(
+                                "{} 异常算力 完成百分比:{:<3} 完成进度:{:<5}/{:<5} 当前算力:{}it",
+                                address, percent, prce, total, it
+                            );
+                            hashstring.insert("need_restart".to_string(), string);
+                        }
+                        _ => {
+                            // 正常范围算力
+                            string = format!(
+                                "{} 正在任务 完成百分比:{:<3} 完成进度:{:<5}/{:<5} 当前算力:{}it",
+                                address, percent, prce, total, it
+                            );
+
+                            hashstring.insert("work_it".to_string(), string);
+                        }
                     }
-                    hashstring.insert("verify_it".to_string(), string);
+
+                    continue;
+                }
+                if request_task.captures(&line).is_some() {
+                    hashstring.insert("need_restart".to_string(), line.clone());
                     continue;
                 }
 
@@ -266,10 +300,22 @@ impl Logs {
 
                 println!("{}", body);
                 instant = Instant::now();
-                hashstring.clear();
-                if complated.captures(&body).is_some() {
-                    continue;
+                if hashstring.contains_key("need_restart") {
+                    let restart = hashstring
+                        .get("need_restart")
+                        .unwrap_or(&"".to_string())
+                        .to_string();
+                    let log_channel = Arc::clone(&LOG_CHANNEL);
+                    let locked = log_channel.lock().await;
+                    let _ = (*locked).0.send(Massage {
+                        address: address.clone(),
+                        msg_type: MsgType::RESTART,
+                        body: restart.clone(),
+                    });
+                    drop(locked);
+                    warn!("需要重启:{:?}", restart);
                 }
+                hashstring.clear();
             }
         }
     }
@@ -290,10 +336,6 @@ impl Logs {
             tokio::time::sleep(std::time::Duration::from_secs(10)).await;
         }
     }
-}
-
-pub fn my_logs() {
-    // OpenOptions::new().
 }
 
 #[derive(Serialize, Deserialize, Debug, Display)]
