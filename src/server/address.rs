@@ -358,7 +358,7 @@ impl Address {
                 if let Ok(cards) = &markets {
                   
                     for card in cards.iter() {
-                        info!("len:{}",card.card_number);
+                        // info!("len:{}",card.card_number);
                         if card.card_type == CardType::NVIDIA4090
                             && (card.card_number as usize) == wallet.len()
                         {
@@ -400,10 +400,17 @@ impl Address {
         }
         let local_time = Local::now();
         let wallet = (*self).get_mut(wallet_adress).unwrap();
+        match wallet.deploy {
+            Deployed::NOTASSIGNED => {
+                wallet.deploy = deploy;
+                wallet.start_time = Some(local_time);
+            },
+            Deployed::DEPLOYING { .. }=>{
+                wallet.deploy = deploy;
+                wallet.start_time = Some(local_time);
+            },
 
-        if Deployed::NOTASSIGNED == wallet.deploy {
-            wallet.deploy = deploy;
-            wallet.start_time = Some(local_time);
+            Deployed::DEPLOYED { .. } => {},
         }
         Ok(())
     }
