@@ -60,6 +60,7 @@ impl Ssh {
                     }
                 } else {
                     errors.push(order.order_id);
+                    warn!("ssh远程操作失败:{:?}", result)
                 }
             } else {
                 errors.push(order.order_id);
@@ -106,7 +107,11 @@ impl Ssh {
                 };
             }
             info!("解析远程地址:{:?}", address);
-            Ok(address)
+            if address.is_empty() {
+                Err("远程进程无结果".to_string())
+            } else {
+                Ok(address)
+            }
         } else {
             let e = format!("远程执行ssh读取失败{:?}", result);
             warn!(e);

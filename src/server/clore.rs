@@ -8,7 +8,8 @@ use reqwest::{
 use serde_json::{Number, Value};
 use std::{
     collections::HashMap,
-    fs::File,
+    env,
+    fs::{File, OpenOptions},
     io::{Read, Write},
     sync::Arc,
 };
@@ -43,6 +44,8 @@ impl Clore {
             .text()
             .await
             .map_err(|e| e.to_string())?;
+        let mut file = File::open(env::current_dir().unwrap().join("market.json")).unwrap();
+        let _ = file.write_all(text.as_bytes());
         // info!("服务器响应:{:?}", &text);
         let blocked_server_ids = Clore::import_block_server_ids();
         let markets = serde_json::from_str::<Marketplace>(&text)
@@ -193,16 +196,19 @@ impl Clore {
     pub async fn cancel_order(&self, order_id: u32) -> Result<(), String> {
         let config::Clore { api_host, .. } = Clore::get_config().await;
         let url = format!("{}{}", api_host, "v1/cancel_order");
-        let body = format!("{{\"id\":\"{}\"}}", order_id);
-        info!(
-            "cancel_order body:{},{:?}",
-            body,
-            serde_json::from_str::<serde_json::Value>(&body)
+        let body = format!(r#"{{"id":"{}"}}"#, order_id);
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "Content-type",
+            HeaderValue::from_str("application/json").unwrap(),
         );
-        let text = Clore::get_client()
+        let text = ClientBuilder::new()
+            .timeout(std::time::Duration::from_secs(30))
+            .default_headers(headers)
+            .build()
             .map_err(|e| e.to_string())?
             .post(url)
-            .json(&body)
+            .body(body)
             .send()
             .await
             .map_err(|e| e.to_string())?
@@ -219,9 +225,50 @@ impl Clore {
         });
 
         if code == 0 {
+            info!("取消订单成功");
             Ok(())
         } else {
-            Err(format!("取消失败:{:?}", code))
+            let message = format!("取消失败:{:?}", code);
+            error!("{}", message);
+            Err(message)
+        }
+    }
+
+    pub async fn cancel_order_web_api(&self, order_id: u32) -> Result<(), String> {
+        let config::Clore {
+            web_api_host,
+            web_token,
+            ..
+        } = Clore::get_config().await;
+        let body = format!(
+            r#"{{"id":{},"rating":2,"token":"{}"}}"#,
+            order_id, web_token
+        );
+        let url = format!("{}webapi/marketplace/cancel_order", web_api_host);
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "Content-type",
+            HeaderValue::from_str("application/json").unwrap(),
+        );
+        let result = ClientBuilder::new()
+            .timeout(std::time::Duration::from_secs(30))
+            .default_headers(headers)
+            .build()
+            .map_err(|e| e.to_string())?
+            .post(url)
+            .body(body)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?
+            .text()
+            .await
+            .map_err(|e| e.to_string())?;
+        if r#"{"status":"ok"}"# == &result {
+            info!("订单取消成功:{}", result);
+            Ok(())
+        } else {
+            error!("取消失败:{}", result);
+            Err(result)
         }
     }
 

@@ -323,24 +323,32 @@ impl Address {
 
             // 尝试远程ssh执行获取python挖矿进程。如果链接有出问题，则取消本次更新
             let (lists, error) = ssh::Ssh::try_run_command_remote(&filter_orders).await;
+
             // 对ssh获取成功的进程，将服务器信息挂在到子钱包地址上去
             for (wallet_adress, deployed) in lists {
                 let _ = (*self).assgin_server(&wallet_adress, deployed).await;
             }
 
-            // 等待所有服务器成功挂载以后，在看有需要部署的没
+            // 返回没有租用服务器的钱包地址
+            for (_, wallet) in (*self).iter_mut() {
+                if wallet.addr_type == AddressType::SUB && wallet.deploy == Deployed::NOTASSIGNED {
+                    wallets.push(wallet.clone());
+                }
+            }
+
+            // 如果请求远程有发生错误
+            // 已经知道租用的显卡数量等于了地址数量
+            // 则将清空未使用的钱包地址
             if !error.is_empty() {
-                return wallets;
+                warn!("ssh remote err:{:?}", error);
+                wallets.clear();
+            }
+
+            if my_orders.get_total_card_number() == self.get_total_sub_addr() {
+                warn!("当前已经满卡");
+                wallets.clear();
             }
         }
-
-        // 返回没有租用服务器的钱包地址
-        for (_, wallet) in (*self).iter_mut() {
-            if wallet.addr_type == AddressType::SUB && wallet.deploy == Deployed::NOTASSIGNED {
-                wallets.push(wallet.clone());
-            }
-        }
-
         wallets
     }
 
@@ -348,15 +356,14 @@ impl Address {
         if wallets.len() > 0 {
             let clore = Clore::default();
             let markets = clore.marketplace().await;
-            let wallets = wallets.as_slice().chunks(1);
+            let wallets = wallets.as_slice().chunks(2);
             for wallet in wallets {
-                info!("需要租用卡:{:?},len:{}",wallet,wallet.len());
+                info!("需要租用卡:{:?},len:{}", wallet, wallet.len());
                 let address = wallet
                     .iter()
                     .map(|item| item.address.clone())
                     .collect::<Vec<String>>();
                 if let Ok(cards) = &markets {
-                  
                     for card in cards.iter() {
                         // info!("len:{}",card.card_number);
                         if card.card_type == CardType::NVIDIA4090
@@ -404,13 +411,13 @@ impl Address {
             Deployed::NOTASSIGNED => {
                 wallet.deploy = deploy;
                 wallet.start_time = Some(local_time);
-            },
-            Deployed::DEPLOYING { .. }=>{
+            }
+            Deployed::DEPLOYING { .. } => {
                 wallet.deploy = deploy;
                 wallet.start_time = Some(local_time);
-            },
+            }
 
-            Deployed::DEPLOYED { .. } => {},
+            Deployed::DEPLOYED { .. } => {}
         }
         Ok(())
     }
@@ -478,6 +485,16 @@ impl Address {
             }
         }
     }
+
+    fn get_total_sub_addr(&self) -> u32 {
+        let mut total_sub_addr = 0;
+        for (_, address) in self.iter() {
+            if address.addr_type != AddressType::MASTER {
+                total_sub_addr += 1;
+            }
+        }
+        total_sub_addr
+    }
 }
 
 pub async fn pool() {
@@ -508,7 +525,7 @@ pub async fn pool() {
         //     }
         // }
         // drop(locked);
-        tokio::time::sleep(std::time::Duration::from_secs(20)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(30)).await;
         // tokio::time::sleep(std::time::Duration::from_secs(60 * 5)).await;
     }
 }

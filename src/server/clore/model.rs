@@ -83,7 +83,7 @@ pub struct Card {
     pub price_spot: f64,
     pub avg_price_spot: f64,
     pub mrl: u32,
-    pub card_number: i32,
+    pub card_number: u32,
     pub rented: bool,
     pub card_type: CardType,
 }
@@ -96,8 +96,9 @@ pub mod market {
     };
 
     use regex::Regex;
+    use reqwest::get;
     use serde::{Deserialize, Serialize};
-    use tracing::warn;
+    use tracing::{info, warn};
 
     use super::{Card, CardType};
 
@@ -119,6 +120,49 @@ pub mod market {
         pub gpu: String,
         pub gpuram: f32,
         pub net: Net,
+    }
+
+    impl Specs {
+        pub fn get_card_number(&self) -> u32 {
+            let gpu = self
+                .gpu
+                .split(" ")
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>();
+            let card_number = gpu
+                .get(0)
+                .and_then(|data| data.replace("x", "").parse::<u32>().ok())
+                .unwrap_or(1);
+            card_number
+        }
+
+        pub fn get_card_type(&self) -> CardType {
+            let card_info = self
+                .gpu
+                .split(" ")
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>();
+            let factory = card_info
+                .get(1)
+                .map(|item| item.to_owned())
+                .unwrap_or_default();
+            let card_type = card_info
+                .get(4)
+                .map(|item| item.to_owned())
+                .unwrap_or_default();
+            let mut flag = card_info
+                .get(5)
+                .map(|itme| itme.to_uppercase().to_owned())
+                .unwrap_or_default();
+            flag = match flag.as_str() {
+                "TI" => "TI".to_string(),
+                "SUPER" => "S".to_string(),
+                _ => "".to_string(),
+            };
+            let card_type = CardType::from_str(&format!("{}{}{}", factory, card_type, flag))
+                .unwrap_or_else(|_| CardType::UNKNOWN(card_info.join(" ")));
+            card_type
+        }
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -148,50 +192,36 @@ pub mod market {
 
     impl Marketplace {
         pub fn filter(&self) -> Vec<Card> {
-            let regex = Regex::new(r"(3080|3090|4070|4080|4080|4090)").unwrap();
+            let regex_cpu = Regex::new(r"((?i)ryzen|intel)").unwrap();
+            let regex_gpu = Regex::new(r"(3080|3090|4070|4080|4080|4090)").unwrap();
             let mut cards: Vec<Card> = (*self)
                 .iter()
                 .filter(|item| {
                     let machine_properties = &item.specs;
                     let gpu = &machine_properties.gpu;
-                    regex.is_match(&gpu)
+                    let cpu = &machine_properties.cpu;
+                    let cpus = &machine_properties
+                        .cpus
+                        .split("/")
+                        .map(|cpu| cpu.parse::<u32>().unwrap_or(0u32))
+                        .collect::<Vec<u32>>();
+                    if cpus.len() != 2 {
+                        return false;
+                    }
+                    let used = cpus.get(0).unwrap_or(&0u32);
+                    let total = cpus.get(1).unwrap_or(&0u32);
+                    regex_gpu.is_match(&gpu)
                         && item.rating.get("avg").unwrap_or(&0f32) > &3f32
                         && item.allowed_coins.contains(&"CLORE-Blockchain".to_string())
                         && !item.rented
                         && item.mrl > 72
                         && item.specs.net.down > 20f64
+                        && regex_cpu.is_match(cpu)
+                        && (total - used) >= 6u32
                 })
                 .map(|item| {
-                    let card_info = item
-                        .specs
-                        .gpu
-                        .split(' ')
-                        .map(|item| item.to_string())
-                        .collect::<Vec<String>>();
-                    let number = card_info.get(0).map_or(0, |s| {
-                        let s = s.replace("x", "");
-                        s.parse::<i32>().map_or(1, |n| n)
-                    });
-                    let factory = card_info
-                        .get(1)
-                        .map(|item| item.to_owned())
-                        .unwrap_or_default();
-                    let card_type = card_info
-                        .get(4)
-                        .map(|item| item.to_owned())
-                        .unwrap_or_default();
-                    let mut flag = card_info
-                        .get(5)
-                        .map(|itme| itme.to_uppercase().to_owned())
-                        .unwrap_or_default();
-                    flag = match flag.as_str() {
-                        "TI" => "TI".to_string(),
-                        "SUPER" => "S".to_string(),
-                        _ => "".to_string(),
-                    };
-                    let card_type =
-                        CardType::from_str(&format!("{}{}{}", factory, card_type, flag))
-                            .unwrap_or_else(|_| CardType::UNKNOWN(card_info.join(" ")));
+                    let number = item.specs.get_card_number();
+                    let card_type = item.specs.get_card_type();
                     let price_demand = item
                         .price
                         .on_demand
@@ -199,7 +229,6 @@ pub mod market {
                         .and_then(|price| Some(price.clone()))
                         .unwrap_or_default();
                     let avg_price_demand = price_demand / (number as f64);
-
                     let price_spot = item
                         .price
                         .spot
@@ -230,8 +259,11 @@ pub mod market {
                             warn!("未知显卡:{:?}", item.card_type);
                             false
                         }
-                        _ if total_max_price > item.avg_price_demand && item.card_type == CardType::NVIDIA4090=> true,
-
+                        _ if total_max_price > item.avg_price_demand
+                            && item.card_type == CardType::NVIDIA4090 =>
+                        {
+                            true
+                        }
 
                         _ => false,
                     }
@@ -407,8 +439,10 @@ pub mod resent {
 pub mod my_orders {
     use std::ops::{Deref, DerefMut};
 
-    use chrono::{DateTime, FixedOffset, Utc};
+    use chrono::{DateTime, FixedOffset};
     use serde::{Deserialize, Serialize};
+
+    use super::market::Specs;
 
     fn online() -> bool {
         false
@@ -430,6 +464,7 @@ pub mod my_orders {
         pub pub_cluster: Vec<String>,
         pub tcp_ports: Vec<String>,
         pub http_port: String,
+        pub specs: Specs,
     }
 
     impl std::fmt::Display for Order {
@@ -525,6 +560,13 @@ pub mod my_orders {
     }
 
     impl MyOrders {
-        pub fn filter(&self) {}
+        pub fn get_total_card_number(&self) -> u32 {
+            let mut total_card = 0;
+            for order in self.orders.iter() {
+                total_card += order.specs.get_card_number();
+            }
+
+            total_card
+        }
     }
 }

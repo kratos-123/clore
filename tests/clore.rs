@@ -157,7 +157,16 @@ mod test {
     #[tokio::test]
     async fn cancel_order_test() {
         crate::common::setup();
-        let orderid = 11044;
-        Clore::default().cancel_order(orderid).await;
+        let orderid = 259841;
+        let result = Clore::default().cancel_order(orderid).await;
+        info!("{:?}", result);
+        assert_eq!(true, result.is_ok())
+    }
+
+    #[tokio::test]
+    async fn cancel_order_web_api_test() {
+        crate::common::setup();
+        let orderid = 259841;
+        Clore::default().cancel_order_web_api(orderid).await;
     }
 }

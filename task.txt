@@ -4,8 +4,9 @@
 2.监控端计算出空闲显卡，请求服务端分配资源
 
 
-ssh root@n6.c1.clorecloud.net -p 10280
-ssh root@n4.c1.clorecloud.net -p 10021
+ssh root@n3.c1.clorecloud.net -p 11208
+ssh root@n4.c1.clorecloud.net -p 10270
+ssh root@n6.c1.clorecloud.net -p 11031
 ssh root@n4.c1.clorecloud.net -p 10138
 ssh root@n3.c1.clorecloud.net -p 10287
 
