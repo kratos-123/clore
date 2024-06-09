@@ -98,7 +98,7 @@ mod test {
             if cards.len() > 0 {
                 let resent_server = cards.get(0).unwrap();
                 let address = Vec::<String>::new();
-                if resent_server.card_number > address.len() as i32 {
+                if resent_server.card_number > address.len() as u32 {
                     panic!("所租显卡无法进行地址分配");
                 }
                 info!("resent_server_id:{:?}", resent_server);
@@ -123,11 +123,11 @@ mod test {
             .map(|card| card.clone())
             .collect::<Vec<Card>>();
         for card in cards.iter() {
-            if card.card_number > address.len() as i32 {
+            if card.card_number > address.len() as u32 {
                 panic!("所租显卡无法进行地址分配");
             }
             let addr = address[0..(card.card_number as usize)].to_vec();
-            clore.create_order_web_api(card, addr).await;
+            let _ = clore.create_order_web_api(card, addr).await;
         }
     }
 
@@ -166,7 +166,7 @@ mod test {
     #[tokio::test]
     async fn cancel_order_web_api_test() {
         crate::common::setup();
-        let orderid = 259841;
+        let orderid = 257308;
         Clore::default().cancel_order_web_api(orderid).await;
     }
 }
