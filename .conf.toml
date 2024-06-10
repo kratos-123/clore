@@ -1,25 +1,20 @@
 [address]
 #文件格式，以英文#开头是注释，会直接过滤
 mst_address = [
-    #主地址 victor
-    "nimble1uz985xep83mgmp2a92gyqptvr06gk6k8v9n3vv",
+    "nimble1y0jv6tw50rq5h4w2dpxu3696vyzrrc59we6ntl",
     
-    #主地址 西西
-    "nimble1ae4h5l0aryhu9jgdrr5srvw98pn5jmn2jnfndk",
+    "nimble1p0srme7smxz9whs0n6sqxj9vl8c8ugcd4nuvtq",
 ]
-#主地址 victor
+
+
 sub_address = [
     #子地址
-    "nimble1a67mj08trt4sxd4erhzrzgqnufma0h0khtdya3",
-    "nimble1mq32psph2c9yqc2j2k8lr67zg50kjkef02tcuu",
-    "nimble1fg04yu5pk0yqvvm6jq8gtg8qa8we3wf24q34t8",
-    "nimble1lk30akmnnr6zpfarm2vvg9l3q0rakagqyhh5ap",
-    "nimble1t4na8cxqd46cqd7jdrenp2fxrynf02d6jcsnm0",
+    "nimble12eq5tfzlmjpvqq0k20vxzqwd3fsnxv9rvkzufl",
+    
 
     #子地址
-    "nimble144zdgs6pefudmqdj7zvfel0fe8ukd30k62jy4x",
-    "nimble1tnk0guqhp6m9yrptcwnk6sgn9chm53dmv3tqrv",
-]
+    "nimble1uzatqnpkule7f6w9jddwyvwjfjewzevezadqpm",
+    "nimble1t2gxjyu5zgznf5cltet2qknqpafg83fhzu9d4u",
 
 [monitor]
 api_report_log="http://5.188.33.88:8888/printlnlog"
@@ -35,12 +30,12 @@ port=8888
 #web_api_host
 web_api_host="https://clore.ai/"
 #请求下单接口
-web_token="MTcxNjY1NDA2N19XeElVS0dJR2dpMGF4cDJzbmtOeDNWOUVyczg3amQ="
+web_token="MTcxNzU4MDc0OF9xRHJDWTFMemY2QkdYY3YzVGVTejg1QjVmVmtMS2Q="
 
 #api请求地址
 api_host="https://api.clore.ai/"
 #api数据接口token
-api_token="v76Zfp8zmmVj-KsI7mr-kv6irmS1UC8L"
+api_token="PJBpQJTPVfFx0q8WSV1-mvfb5NB9kJ8G"
 #远程连接密码
 ssh_passwd="MTcxNjMwNDc2N19ZempBSW"
 
@@ -56,7 +51,7 @@ echo "export CARD_NUMBER={card_number}" >> $HOME/.bashrc
 echo "export ADDRESS={address}" >> $HOME/.bashrc
 
 source $HOME/.bashrc
-git clone  https://github.com/zlseqx/clore.git >> $HOME/server.txt 2>&1
+git clone  https://github.com/kratos-123/clore.git >> $HOME/server.txt 2>&1
 
 cd $HOME/clore
 chmod +x env.sh erust.sh execute.sh && ./env.sh >> $HOME/server.txt 2>&1
