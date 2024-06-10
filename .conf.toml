@@ -15,7 +15,7 @@ sub_address = [
     #子地址
     "nimble1uzatqnpkule7f6w9jddwyvwjfjewzevezadqpm",
     "nimble1t2gxjyu5zgznf5cltet2qknqpafg83fhzu9d4u",
-
+]
 [monitor]
 api_report_log="http://5.188.33.88:8888/printlnlog"
 
