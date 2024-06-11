@@ -1,9 +1,9 @@
 pub mod common;
 #[cfg(test)]
 mod wallet {
-    use std::{any::Any, collections::HashMap, sync::Arc};
+    use std::any::Any;
 
-    use monitor::server::address::{Address, AddressType, Wallet, WALLETS_STATE};
+    use monitor::server::address::{Address, Wallet};
     use tracing::info;
 
     #[tokio::test]
