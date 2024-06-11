@@ -253,7 +253,7 @@ pub mod market {
                     card
                 })
                 .filter(|item| {
-                    let total_max_price = item.card_type.get_max_price(item.card_number as f64);
+                    let total_max_price = item.card_type.get_max_price(1f64);
                     match item.card_type {
                         CardType::UNKNOWN(_) => {
                             warn!("未知显卡:{:?}", item.card_type);
