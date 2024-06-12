@@ -217,7 +217,7 @@ pub mod market {
                         && item.mrl > 72
                         && item.specs.net.down > 20f64
                         && regex_cpu.is_match(cpu)
-                        && (total - used) >= 6u32
+                        && used >= &8u32
                 })
                 .map(|item| {
                     let number = item.specs.get_card_number();

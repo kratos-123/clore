@@ -55,7 +55,7 @@ impl Clore {
             .filter(|card| !blocked_server_ids.contains(&card.server_id))
             .map(|card| card.clone())
             .collect::<Vec<_>>();
-        // info!("可用卡:{:?}", &markets);
+        info!("可用卡:{:?}", &markets);
         Ok(markets)
     }
 
