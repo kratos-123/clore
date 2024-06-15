@@ -211,7 +211,7 @@ pub mod market {
                     let used = cpus.get(0).unwrap_or(&0u32);
                     let total = cpus.get(1).unwrap_or(&0u32);
                     regex_gpu.is_match(&gpu)
-                        && item.rating.get("avg").unwrap_or(&0f32) > &3f32
+                        && item.rating.get("avg").unwrap_or(&0f32) > &2.5f32
                         && item.allowed_coins.contains(&"CLORE-Blockchain".to_string())
                         && !item.rented
                         && item.mrl > 72
