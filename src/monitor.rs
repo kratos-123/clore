@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use pm::Process;
+use pm::{Action, Process};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::process::{Command, Stdio};
@@ -154,9 +154,10 @@ impl Monitor {
             return Err(e);
         }
         let pm2 = result.unwrap();
+        let mut action = Action::SKIP;
         for (index, addr) in address.iter().enumerate() {
             let action_name = format!("nimble{}", index);
-            let action = pm2.get_action(&action_name);
+            action = pm2.get_action(&action_name);
             let _ = self.pm2(action, index, addr.clone()).await;
         }
         Ok(())
@@ -228,7 +229,7 @@ pub async fn monitor() {
             }
         }
 
-        (*monitor_locked).dispatch().await;
+        // (*monitor_locked).dispatch().await;
         drop(monitor_locked);
         tokio::time::sleep(std::time::Duration::from_secs(10)).await;
     }

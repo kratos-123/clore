@@ -217,7 +217,7 @@ pub mod market {
                         && item.mrl > 72
                         && item.specs.net.down > 20f64
                         && regex_cpu.is_match(cpu)
-                        && (total - used) >= 6u32
+                        && used >= &8u32
                 })
                 .map(|item| {
                     let number = item.specs.get_card_number();
@@ -253,7 +253,7 @@ pub mod market {
                     card
                 })
                 .filter(|item| {
-                    let total_max_price = item.card_type.get_max_price(item.card_number as f64);
+                    let total_max_price = item.card_type.get_max_price(1f64);
                     match item.card_type {
                         CardType::UNKNOWN(_) => {
                             warn!("未知显卡:{:?}", item.card_type);
@@ -481,7 +481,7 @@ pub mod my_orders {
                 "".to_string()
             };
             let s = format!(
-                "orderid:{},serverid:{},是否在线:{},创建时间:{},可用时长:{:3}H,价格:{}/天{}",
+                "orderid:{:6},serverid:{:5},是否在线:{},创建时间:{},可用时长:{:4}H,价格:{:3.3}/天{}",
                 self.order_id,
                 self.server_id,
                 self.online,

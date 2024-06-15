@@ -217,7 +217,7 @@ impl Logs {
         let verify = Regex::new(r"\{'(loss|eval_loss).*}").unwrap();
 
         // 任务完成时输出
-        let complated = Regex::new(r"completed the task.*").unwrap();
+        let _complated = Regex::new(r"completed the task.*").unwrap();
 
         let mut instant = tokio::time::Instant::now();
         let mut lines = reader.lines();
