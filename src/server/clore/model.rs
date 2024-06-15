@@ -481,7 +481,7 @@ pub mod my_orders {
                 "".to_string()
             };
             let s = format!(
-                "orderid:{},serverid:{},是否在线:{},创建时间:{},可用时长:{:3}H,价格:{}/天{}",
+                "orderid:{:6},serverid:{:5},是否在线:{},创建时间:{},可用时长:{:4}H,价格:{:3.3}/天{}",
                 self.order_id,
                 self.server_id,
                 self.online,

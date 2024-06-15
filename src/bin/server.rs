@@ -2,10 +2,17 @@ use actix_web::{App, HttpServer};
 use monitor::server::address::pool;
 use monitor::server::distribute_address;
 use monitor::server::printlnlog;
+use time::macros::format_description;
+use time::UtcOffset;
+use tracing_subscriber::fmt::time::OffsetTime;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    tracing_subscriber::fmt::init();
+    let local_time = OffsetTime::new(
+        UtcOffset::from_hms(8, 0, 0).unwrap(),
+        format_description!("[year]-[month]-[day] [hour]:[minute]:[second].[subsecond digits:3]"),
+    );
+    tracing_subscriber::fmt().with_timer(local_time).init();
     let mut tasks: Vec<_> = Vec::new();
     tasks.push(tokio::spawn(pool()));
 
