@@ -19,6 +19,7 @@ MTcxNjMwNDc2N19ZempBSW
 echo "export CARD_NUMBER=1" >> ~/.bashrc
 echo "export SERVER_ID=25299" >> ~/.bashrc
 echo "export ADDRESS=nimble1tnk0guqhp6m9yrptcwnk6sgn9chm53dmv3tqrv" >> ~/.bashrc
+source ~/.bashrc
 cargo run -r --bin monitor -- >> $HOME/clore/monitor.txt 2>&1 &
 
 
