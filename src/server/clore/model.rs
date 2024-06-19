@@ -215,7 +215,7 @@ pub mod market {
                         && item.allowed_coins.contains(&"CLORE-Blockchain".to_string())
                         && !item.rented
                         && item.mrl > 72
-                        && item.specs.net.down > 20f64
+                        && item.specs.net.down > 50f64
                         && regex_cpu.is_match(cpu)
                         && used >= &8u32
                 })
