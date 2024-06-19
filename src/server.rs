@@ -8,7 +8,6 @@ use tracing::info;
 
 pub mod address;
 pub mod clore;
-pub mod data;
 pub mod ssh;
 
 #[get("/distribute_address/{card_number}/{server_id}")]

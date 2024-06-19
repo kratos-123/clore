@@ -154,6 +154,7 @@ impl Monitor {
             return Err(e);
         }
         let pm2 = result.unwrap();
+        #[allow(unused)]
         let mut action = Action::SKIP;
         for (index, addr) in address.iter().enumerate() {
             let action_name = format!("nimble{}", index);
