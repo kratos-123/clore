@@ -13,17 +13,19 @@ async fn main() -> std::io::Result<()> {
         format_description!("[year]-[month]-[day] [hour]:[minute]:[second].[subsecond digits:3]"),
     );
     tracing_subscriber::fmt().with_timer(local_time).init();
-    let mut tasks: Vec<_> = Vec::new();
-    tasks.push(tokio::spawn(pool()));
 
-    let _ = HttpServer::new(|| App::new().service(distribute_address).service(printlnlog))
-        .bind(("0.0.0.0", 8888))?
-        .run()
-        .await;
+    pool().await;
+    // let mut tasks: Vec<_> = Vec::new();
+    // tasks.push(tokio::spawn(pool()));
 
-    for task in tasks.into_iter() {
-        task.abort();
-    }
+    // let _ = HttpServer::new(|| App::new().service(distribute_address).service(printlnlog))
+    //     .bind(("0.0.0.0", 8888))?
+    //     .run()
+    //     .await;
+
+    // for task in tasks.into_iter() {
+    //     task.abort();
+    // }
 
     Ok(())
 }

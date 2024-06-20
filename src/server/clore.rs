@@ -47,12 +47,11 @@ impl Clore {
         let mut file = File::open(env::current_dir().unwrap().join("market.json")).unwrap();
         let _ = file.write_all(text.as_bytes());
         // info!("服务器响应:{:?}", &text);
-        let blocked_server_ids = Clore::import_block_server_ids();
+
         let markets = serde_json::from_str::<Marketplace>(&text)
             .map_err(|e| e.to_string())?
             .filter()
             .iter()
-            .filter(|card| !blocked_server_ids.contains(&card.server_id))
             .map(|card| card.clone())
             .collect::<Vec<_>>();
         info!("可用卡:{:?}", &markets);

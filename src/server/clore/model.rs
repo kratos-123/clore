@@ -99,6 +99,8 @@ pub mod market {
     use serde::{Deserialize, Serialize};
     use tracing::warn;
 
+    use crate::server::clore::Clore;
+
     use super::{Card, CardType};
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -193,6 +195,7 @@ pub mod market {
         pub fn filter(&self) -> Vec<Card> {
             let regex_cpu = Regex::new(r"((?i)ryzen|intel)").unwrap();
             let regex_gpu = Regex::new(r"(3080|3090|4070|4080|4080|4090)").unwrap();
+            let blocked_server_ids = Clore::import_block_server_ids();
             let mut cards: Vec<Card> = (*self)
                 .iter()
                 .filter(|item| {
@@ -215,10 +218,11 @@ pub mod market {
                         && item.allowed_coins.contains(&"CLORE-Blockchain".to_string())
                         && !item.rented
                         && item.mrl > 72
-                        && item.specs.net.down > 50f64
+                        && item.specs.net.down > 25f64
                         && regex_cpu.is_match(cpu)
                         && used >= &8u32
                 })
+                .filter(|card| !blocked_server_ids.contains(&card.id))
                 .map(|item| {
                     let number = item.specs.get_card_number();
                     let card_type = item.specs.get_card_type();
