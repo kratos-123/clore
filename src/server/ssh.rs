@@ -67,7 +67,55 @@ impl Ssh {
                 warn!("ssh远程操作失败:{:?}", result)
             }
         }
-        info!("远端总在跑的地址:{:?}", address);
+        info!("远端总在跑的地址:");
+        for (addr, deployed) in address.iter() {
+            match deployed {
+                Deployed::NOTASSIGNED => {}
+                Deployed::DEPLOYING {
+                    orderid,
+                    serverid,
+                    sshaddr,
+                    sshport,
+                } => {
+                    println!(
+                        "addr:{},serverid:{:7},orderid:{:7},ssh root@{} -p {}",
+                        addr,
+                        serverid,
+                        orderid,
+                        sshaddr
+                            .clone()
+                            .and_then(|e| Some(e.clone()))
+                            .unwrap_or_default(),
+                        sshport
+                            .clone()
+                            .and_then(|e| Some(e.clone()))
+                            .unwrap_or_default(),
+                    );
+                }
+                Deployed::DEPLOYED {
+                    orderid,
+                    serverid,
+                    sshaddr,
+                    sshport,
+                } => {
+                    println!(
+                        "addr:{},serverid:{:7},orderid:{:7},ssh root@{} -p {}",
+                        addr,
+                        serverid,
+                        orderid,
+                        sshaddr
+                            .clone()
+                            .and_then(|e| Some(e.clone()))
+                            .unwrap_or_default(),
+                        sshport
+                            .clone()
+                            .and_then(|e| Some(e.clone()))
+                            .unwrap_or_default(),
+                    );
+                }
+            }
+        }
+
         (address, errors)
     }
 

@@ -9,7 +9,7 @@ use serde_json::{Number, Value};
 use std::{
     collections::HashMap,
     env,
-    fs::{File, OpenOptions},
+    fs::File,
     io::{Read, Write},
     sync::Arc,
 };
@@ -181,7 +181,7 @@ impl Clore {
             .text()
             .await
             .map_err(|e| e.to_string())?;
-        info!("my_order_text:{}", text);
+        // info!("my_order_text:{}", text);
         let result: Result<MyOrders, String> =
             serde_json::from_str::<MyOrders>(&text).map_err(|e| e.to_string());
         if let Ok(my_orders) = &result {

@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf, str::FromStr};
+use std::env;
 
 fn main() {
     let path = env::current_dir()

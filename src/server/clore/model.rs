@@ -96,17 +96,16 @@ pub mod market {
     };
 
     use regex::Regex;
-    use reqwest::get;
     use serde::{Deserialize, Serialize};
-    use tracing::{info, warn};
+    use tracing::warn;
 
     use super::{Card, CardType};
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct Net {
-        up: f64,
-        down: f64,
-        cc: String,
+        pub up: f64,
+        pub down: f64,
+        pub cc: String,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -209,13 +208,14 @@ pub mod market {
                         return false;
                     }
                     let used = cpus.get(0).unwrap_or(&0u32);
+                    #[allow(unused)]
                     let total = cpus.get(1).unwrap_or(&0u32);
                     regex_gpu.is_match(&gpu)
                         && item.rating.get("avg").unwrap_or(&0f32) > &3f32
                         && item.allowed_coins.contains(&"CLORE-Blockchain".to_string())
                         && !item.rented
                         && item.mrl > 72
-                        && item.specs.net.down > 20f64
+                        && item.specs.net.down > 50f64
                         && regex_cpu.is_match(cpu)
                         && used >= &8u32
                 })
@@ -481,7 +481,12 @@ pub mod my_orders {
                 "".to_string()
             };
             let s = format!(
-                "orderid:{:6},serverid:{:5},是否在线:{},创建时间:{},可用时长:{:4}H,价格:{:3.3}/天{}",
+                "Cpu:{},GpuInfo:{},Ram:{:.2},Net_down:{:.2},Net_up:{:.2}\norderid:{:6},serverid:{:5},是否在线:{},创建时间:{},可用时长:{:4}H,价格:{:3.3}/天,{}\n",
+                self.specs.cpu,
+                self.specs.gpu,
+                self.specs.ram,
+                self.specs.net.down,
+                self.specs.net.up,
                 self.order_id,
                 self.server_id,
                 self.online,
